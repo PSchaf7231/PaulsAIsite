@@ -1,3 +1,2 @@
-import Link from "next/link";
-import { agent } from "@/lib/config";
-export default function PaxPreview(){return <div className="pax-card"><div className="pax-card-head"><span className="pax-avatar" aria-hidden="true">p.</span><div><strong>Meet {agent.assistant.name}</strong><small>Your local real estate assistant · Coming in Phase 2</small></div></div><div className="pax-card-body"><div className="pax-bubble">Are you buying, selling, or just browsing today?</div><div className="quick-links"><Link href="/listings">Find a home ↗</Link><Link href="/guides/preparing-to-sell">Sell my home ↗</Link><Link href="/listings?type=RENT">Lease a home ↗</Link><Link href="/pax">Create an alert ↗</Link><Link href="/contact">Talk to {agent.name.split(" ")[0]} ↗</Link></div><p className="pax-note">A preview of what’s next. These shortcuts work now; live chat and alerts will be added in later phases.</p></div></div>}
+import PaxChat from "./pax-chat";
+export default function PaxPreview(){return <PaxChat compact/>}

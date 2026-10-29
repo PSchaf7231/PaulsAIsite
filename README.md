@@ -1,85 +1,136 @@
-# Palm Beach Living — Phase 1
+# Palm Beach Living — Phase 2: Pax
 
-Local real estate website for **Paul Schafranick**, with a Supabase + Prisma database foundation. No Docker is required. Brokerage is omitted. Later phases are documented in `PLAN.md`; Pax chat, lead capture, Facebook ingestion, CRM, and automated messaging are not implemented yet.
+For **Paul Schafranick** · 561-255-7285 · paul@palmbeachrealestatepros.com. Brokerage branding remains omitted. Local development only; nothing is deployed.
 
-## 1. Run on your Windows laptop
+Pax now provides streamed AI chat, sample listing search/cards/map, freely saved homes, preference and timeline tracking, confirmed contact capture, saved-search criteria, seller report requests, callback requests, and a durable Paul-notification queue. It uses only the **five fictional sample listings**. No MLS or Vapi integration is connected.
 
-Install **Node.js 24 LTS** from nodejs.org. Extract the project archive or open this repository, then open PowerShell in the folder containing `package.json`:
+## Update and run on Windows
 
-```powershell
-node --version
-npm.cmd ci
-Copy-Item .env.example .env
-npm.cmd run dev
+Install **Node.js 24 LTS**. If you use Git, run `git pull origin main`. Otherwise download **Code → Download ZIP** from GitHub and extract it into a new folder. Copy your existing private `.env` into the new project folder; do not overwrite it with `.env.example` or upload it to GitHub.
+
+Open PowerShell in the folder containing `package.json`. Double-click **Open-env.cmd** to open `.env` in Notepad. It creates the file from `.env.example` only when `.env` does not exist.
+
+Keep your existing Supabase connection strings. Add the new entries from `.env.example` to your private `.env`, especially:
+
+```dotenv
+LISTINGS_SOURCE="sample"
+SITE_URL="http://localhost:3000"
+OPENAI_API_KEY="YOUR_OPENAI_API_KEY_HERE"
+OPENAI_MODEL="gpt-4o"
+PAX_STORAGE="database"
+PAX_NOTIFICATIONS="off"
 ```
 
-Open **http://localhost:3000**. Leave that PowerShell window open while using the site. Press Ctrl+C to stop. `npm.cmd` avoids PowerShell script-execution-policy problems. If `.env` already exists, edit it instead of copying over it.
+The OpenAI key is a server-side API key with API billing enabled, separate from a ChatGPT subscription. Never put it in `config/agent.json`, a `NEXT_PUBLIC_` variable, or GitHub. `OPENAI_MODEL` can be changed to another tool-capable model available to your OpenAI account. The configured default follows the original gpt-4o brief; model availability must be verified with your account. Do not add your future MLS key yet.
 
-The default `LISTINGS_SOURCE="sample"` explicitly loads five fictional properties from `src/lib/sample-listings.json`. It does not connect to a database or send messages. This lets you review Phase 1 before setting up Supabase.
+`LISTINGS_SOURCE=sample` controls public browsing. Pax is independently pinned to the same five sample records in this phase, so future changes to that environment variable cannot accidentally enable MLS tool access. `PAX_STORAGE=database` stores chat and conversion records in Supabase; it does not select the listing feed.
 
-## Open the password file easily
-
-Double-click **`Open-env.cmd`** in the extracted project folder. It creates `.env` from the template if needed, then opens it in Windows Notepad. Replace `ENCODED_PASSWORD` in both connection lines with your URL-encoded **database password** and save. Do not paste the password in chat or put it in the public config.
-
-## 2. Connect hosted Supabase Postgres
-
-1. Create or choose a Supabase project. Wait for its database to be ready. Use a dedicated project for this site.
-Your supplied project is `ztkihbwbkzaugqymsxpy`, with pooler host `aws-1-ca-central-1.pooler.supabase.com`. These non-secret identifiers are prefilled in `.env.example`. Replace `ENCODED_PASSWORD` with your actual URL-encoded database password in `.env`, not chat.
-
-2. Open the project's **Connect** panel. Copy its **Transaction pooler** connection string (usually port **6543**) into `DATABASE_URL` in `.env`.
-3. Copy its **Session pooler** connection string (usually port **5432**) into `DIRECT_URL`. This IPv4-friendly endpoint is used by Prisma migrations. The direct `db.PROJECT.supabase.co:5432` endpoint is also usable on an IPv6-capable connection. Copy the exact host from your dashboard; do not guess its region.
-4. Substitute your database password, URL-encoding any special characters. Keep `sslmode=require` in both URLs. Do not use the Supabase project HTTP URL or anon key as a PostgreSQL connection string.
-5. Keep `LISTINGS_SOURCE="sample"` until migration and seed succeed. In a second PowerShell window run:
+Run these commands one at a time:
 
 ```powershell
-npm.cmd run db:validate
+npm.cmd ci
 npm.cmd run db:migrate
 npm.cmd run db:seed
-npm.cmd run db:check
-```
-
-The check should report `Database connected: 5 listings (5 samples).` Running `db:seed` again should still leave five samples, without duplicate photos. It refuses to overwrite a real listing sharing a sample slug.
-
-6. Change `LISTINGS_SOURCE="database"` in `.env`, stop the dev server, then restart:
-
-```powershell
 npm.cmd run dev
 ```
 
-The same website now reads listings from Supabase through Prisma on the server. `db:migrate` uses the committed migration and does **not** require a shadow database. Use `.env` consistently: Next.js, Prisma CLI, and seed/check scripts all read it. The older Supabase snippet puts URLs in `schema.prisma`; this project uses Prisma 7’s `prisma.config.ts` plus the runtime adapter instead. Do not rerun `prisma init`.
+Open **http://localhost:3000/pax** or the homepage’s chat panel. Keep PowerShell open; Ctrl+C stops the server. If using another port, update `SITE_URL` to the exact browser origin and restart; the chat API deliberately rejects other origins.
 
-The Prisma 7 PostgreSQL adapter handles application connections; the pool is capped at five connections. No browser-side Supabase SDK or service-role key is needed.
+### Supabase connection strings
 
-### Database access
+The template contains your project reference `ztkihbwbkzaugqymsxpy` and host `aws-1-ca-central-1.pooler.supabase.com`. `DATABASE_URL` uses the transaction pooler on port 6543; `DIRECT_URL` uses the session pooler on port 5432 for migrations. Replace `ENCODED_PASSWORD` in both with your URL-encoded **database password**, not your Supabase account login. Keep `sslmode=require`.
 
-The migration enables row-level security and revokes `anon` and `authenticated` access to listing tables. The server uses the privileged database connection. Never expose either database URL in client code or a `NEXT_PUBLIC_` variable. Do not disable SSL verification to fix a connection issue. The initial migration is intended for Supabase, whose `anon` and `authenticated` database roles already exist.
+Prisma 7 uses `prisma.config.ts` for its migration URL and a PostgreSQL driver adapter for runtime connections. Do not rerun `prisma init` or copy the older Prisma 6 datasource URL syntax into the schema. No Docker is needed. `db:migrate` applies both committed migrations without a shadow database. Tables use row-level security with anonymous/authenticated Data API access revoked; only server-side database credentials access them.
 
-## 3. Edit Paul’s information
+## Turn on immediate notifications to Paul
 
-Edit `config/agent.json` and restart the server after changes. It is the source of truth for name, contact, license number, office address, logo/headshot paths, social links, communities, statistics, reviews, and Pax’s future personality. There is no brokerage field or visible brokerage branding.
+Notifications are **off until configured**. They are queued durably when a lead is confirmed or an explicit hot signal appears, and the server attempts delivery immediately. An anonymous hot lead can notify Paul before contact is captured. Contact capture generates a separate alert with the newly supplied details.
 
-- Put a headshot or logo in `public/images/` and use a path such as `/images/paul.jpg`.
-- Add only verified statistics; `null` values show “To be added,” never invented numbers.
-- Add approved reviews as `{ "name": "Client name", "quote": "Approved testimonial" }` entries. The carousel appears when entries exist.
-- Community content: `src/lib/communities.ts`; blog/guides: `src/lib/articles.ts`.
-- In sample mode, edit `src/lib/sample-listings.json`. After edits, rerun the seed to update sample rows in Supabase. The real listings manager arrives in Phase 4.
+Choose one provider in `.env`:
 
-## 4. What to test
+**Email with Resend:**
 
-1. Open the homepage. Confirm Paul’s name, phone, and email; no brokerage; three sample sale cards; eight community cards; stats/reviews/headshot clearly pending.
-2. Click **Work with Paul**. Check that phone and email links launch the appropriate app.
-3. Open **Find a home**. Expect five properties and five map markers. Select **Delray Beach**: expect one card and one marker.
-4. Set maximum price to **500000** while Delray Beach is selected: expect an empty state and no markers. Click **Clear filters**: all five return.
-5. Select **For lease**: expect one Jupiter property at **$3,400 / month**. Check descending price sort and bedroom filters too.
-6. Click a map marker, follow **View property**, and inspect photos, facts, contact links, and the detail map. Sample addresses and images are explicitly labeled.
-7. Open each community page; use its property-search link and confirm the correct community filter is selected. Communities without sample inventory show an honest empty state.
-8. Check About, Contact, Blog and its article, all three Guides, Privacy, Terms, and MLS Disclosure.
-9. On a phone-width screen, use Menu; check no horizontal scrolling, readable cards, and usable map controls.
-10. Open `/sitemap.xml` and `/robots.txt`. Check the homepage source for `RealEstateAgent` JSON-LD. Local preview intentionally uses **noindex** and disallows crawling; sample listing URLs are excluded from the sitemap. Publication settings will be changed only in the deployment phase after content review.
-11. Open **Ask Pax**: it must say live chat is coming in Phase 2. No simulated AI replies, signup walls, visitor tracking, or outbound marketing messages run in Phase 1.
-12. After connecting Supabase, repeat the listing checks in database mode. Change one sample price in Supabase Table Editor and reload; verify it appears. Restore it by running the sample seed. If database access fails, the app shows a retryable error, not silent sample fallback.
+```dotenv
+PAX_NOTIFICATIONS="email"
+RESEND_API_KEY="YOUR_RESEND_KEY_HERE"
+RESEND_FROM="Pax <your-verified-sender@example.com>"
+PAX_AGENT_EMAIL="paul@palmbeachrealestatepros.com"
+```
 
-## 5. Automated checks and production build
+Use a sender/domain verified in your own Resend account. Sender restrictions apply to trial accounts.
+
+**SMS with Twilio:**
+
+```dotenv
+PAX_NOTIFICATIONS="sms"
+TWILIO_ACCOUNT_SID="YOUR_ACCOUNT_SID_HERE"
+TWILIO_AUTH_TOKEN="YOUR_AUTH_TOKEN_HERE"
+TWILIO_FROM_NUMBER="YOUR_TWILIO_NUMBER_IN_E164"
+PAX_AGENT_PHONE="+15612557285"
+```
+
+Use a Twilio SMS-capable sender. Trial accounts may require verifying the recipient. Restart the dev server after changing `.env`.
+
+Keep a second PowerShell window open for retry delivery after temporary provider failures:
+
+```powershell
+npm.cmd run pax:worker
+```
+
+Alternatively, run `npm.cmd run pax:retry` for one pass. Retries use backoff and stop after five failed attempts. Resend uses stable idempotency keys. Twilio can deliver a duplicate if it accepts a message but the response is lost; this is an at-least-once outbox, not an exactly-once SMS guarantee. `sent` means the provider accepted the message, not that the phone/email recipient read it. Worker and application must use the same `.env` and storage mode.
+
+No visitor SMS/email campaigns are sent in Phase 2. Saved searches store criteria only. Paul can follow up personally; scheduled matching, alerts and drips remain later work.
+
+## What to test
+
+1. Acknowledge the chat notice and ask: **“Find a 3-bedroom home in Delray under $600k.”** Expect a short answer, a matching fictional sample card, and the same map marker. Pax should ask one follow-up question, not a list.
+2. Try an impossible price/area combination. Expect no invented properties and a useful next step.
+3. Click **Save this home** without providing contact. It should save freely and offer a relevant next step. Open a property and return to chat; viewed/saved history persists after reload.
+4. Say **“I like this. Can Paul follow up?”** Supply only your own test contact when asked. Confirm the short card. `pax:inbox` should show one lead with the earlier transcript, preferences, timeline, and saved/viewed homes. Repeated confirmation must not create duplicate leads or notifications.
+5. Try **“No thanks, just browsing.”** Pax should continue helping without an immediate repeated contact ask or a search wall.
+6. Say **“We need to sell first.”** Expect an offer for Paul’s free home value report and one next question. Pax must not invent a valuation.
+7. Say **“I’m pre-approved and moving within 60 days.”** Check the recorded hot signal and, after configuring a notification provider, verify Paul receives a short alert. With notifications off, inbox status must say unconfigured, not sent.
+8. Ask for a showing. Pax must explain samples cannot be toured and offer a call about comparable real homes. Supply a preferred call day/time/timezone and contact, then confirm. Status should be **REQUESTED**, never silently booked.
+9. Ask to save search preferences. Confirm the card. It must state automated alerts are not running yet.
+10. Open an incognito/private browser: the prior visitor’s messages/contact must not appear.
+11. On a phone-width screen, check the input, confirmation cards, map, and save buttons. No account is required to browse.
+12. Remove the OpenAI key temporarily and restart. Pax should show a useful unavailable state with browsing/contact links, not simulated AI replies. Restore the key afterward.
+
+## Inbox, actual confirmations, and conversion reporting
+
+Until the Phase 4 CRM exists, use these **local operator commands**. They are not exposed as public web endpoints:
+
+```powershell
+npm.cmd run pax:inbox
+npm.cmd run pax:insights
+```
+
+The inbox contains private contact details and transcripts: do not paste it into public issues. It includes notification status, seller requests, preferences, saved/viewed slugs, and appointment request IDs. The schema also projects confirmed contacts, appointments, and saved searches into `PaxLead`, `PaxAppointment`, and `PaxSavedSearch` tables for the later CRM.
+
+After you have personally agreed on a call time with the visitor, mark it confirmed using the actual future date/time and the appointment request ID shown in the inbox:
+
+```powershell
+npm.cmd run pax:confirm -- APPOINTMENT_ID "2026-11-07T10:00:00-05:00"
+```
+
+Replace both example arguments. This records a confirmation and adds it to the visitor’s chat history; it does not send an external calendar invitation or contact the visitor for you. Confirm the time with the visitor directly first.
+
+Insights reports chats, captured leads, leads with appointment requests, leads with confirmed appointments, chats-to-leads, and leads-to-confirmed-appointments. It counts conversation sessions, not deduplicated humans across devices. An unconfirmed request never counts as a booked appointment. There are no main-screen charts.
+
+## Agent config and architecture
+
+- `config/agent.json`: Paul’s branding/contact details, verified stats/reviews, optional headshot/logo, and Pax personality. Add only approved factual content; missing stats/reviews remain labeled.
+- `src/server/pax/prompt.ts`: value-first, one-question, earned-ask, refusal, seller, hot-lead, factual-grounding, and truthful-action rules.
+- `src/server/pax/tools.ts`: reusable tool factory for listing search/details, save, preferences, contact, saved searches, calls/showings, seller reports, school resource and affordability illustration. Future voice adapters can reuse this factory and the same confirmation/service layer.
+- `src/server/pax/state.ts`: conversion rules, sample results, events, consent-confirmed actions, notifications, and metrics.
+- `src/server/pax/store.ts`: database transactions/leases plus an explicit local-development file store. User turns are checkpointed before AI execution, so provider failure does not erase them. Retry IDs and confirmation statuses prevent duplicate effects.
+- `src/app/api/pax/`: same-origin POST validation, limited body/message sizes, HTTP-only random session cookie, server-authoritative history and per-session turn limits. Callers cannot supply system messages, other conversation IDs, or trusted tool results.
+- `src/components/pax-chat.tsx`: streamed plain-text replies (no model HTML), synchronized cards/map, one-action confirmation, recovery and empty states.
+- `prisma/migrations/202610290002_pax/`: conversation, lead, appointment, saved-search schema. Notification outbox and activity events are part of the atomically saved conversation record.
+
+As with Phase 1, the site remains noindex/local-only. Production deployment, global/distributed abuse controls, retention policy, and real service delivery checks are part of launch preparation; this phase does not deploy the site.
+
+## Automated tests
 
 ```powershell
 npm.cmd test
@@ -89,41 +140,10 @@ npm.cmd exec playwright install chromium
 npm.cmd run test:e2e
 ```
 
-Browser tests use sample mode. Stop another running server first if it is using database mode; the test runner can launch its own dev server. Browser screenshots/reports go to ignored test directories.
+Stop your running dev server before browser tests. Playwright starts an isolated test-mode server using `.pax-test-data/`, the five samples, deterministic chat replies, and preview notifications. It never calls OpenAI or sends messages to real recipients. Test mode is visibly labeled, is not the default, and is rejected in production or database-storage mode. One unit/integration test exercises the actual AI SDK tool loop using its mock model provider. Live prompt quality and provider delivery still require your account credentials and a manual acceptance pass.
 
-To test the production server, stop the dev server first, then:
+For a local preview without Supabase, explicitly set `PAX_STORAGE="local"` while keeping a real `OPENAI_API_KEY` for live AI. Records then persist in ignored `.pax-data/`, never silently fall back from a failed database. This mode is blocked in production. If the dev process crashes mid-write, a stale `.lock` file may remain there; stop all app/worker processes before removing only the stale lock file. Do not delete the JSON record unless you intend to delete that conversation.
 
-```powershell
-npm.cmd run build
-npm.cmd start
-```
+## Remaining phases
 
-## Environment entries in this phase
-
-| Variable | Purpose | Browser exposure |
-| --- | --- | --- |
-| `LISTINGS_SOURCE` | `sample` or `database`; explicit source selection | Mode is reflected by displayed data |
-| `DATABASE_URL` | Supabase transaction pooler; Prisma runtime | Never |
-| `DIRECT_URL` | Supabase session/direct connection; migrations | Never |
-| `SITE_URL` | Canonical local URL; later public URL | Public metadata |
-
-Future OpenAI, Twilio, Resend, Meta, and auth secrets are intentionally not requested yet. `.env` files are ignored by Git and excluded from delivery archives.
-
-## Structure
-
-- `config/agent.json`: editable agent settings.
-- `src/app/`: server-rendered public routes and metadata.
-- `src/components/`: reusable layout, cards, filters, maps, review carousel.
-- `src/server/listings/`: `ListingsProvider` contract plus sample and Prisma implementations; future IDX adapter plugs in here.
-- `src/server/`: server-only database access and Prisma factory used by CLI scripts.
-- `src/lib/`: shared types, filtering, sample data, editorial content.
-- `prisma/`: schema, migration, seed; `prisma.config.ts`: CLI connection configuration.
-- `tests/`: filtering tests and browser flow tests.
-- `PLAN.md`: phase plan including Facebook Instant Forms.
-- `VERIFICATION.md`: checks actually run and remaining setup limits.
-
-## Images, maps, and launch readiness
-
-The hero uses a locally stored AI-generated coastal home illustration (`public/images/coastal-home.png`). Listing and community stock photos load from `images.unsplash.com`, with the local illustration as a fallback; none depicts real inventory or specific communities. Map tiles load from OpenStreetMap with attribution. Both need an internet connection and send ordinary web requests to those providers. If map tiles fail, a message appears and listing cards still work. Select a production tile provider appropriate to expected traffic before launch.
-
-This is a **Phase 1 local deliverable**, not a production launch approval. Legal pages are clearly labeled drafts; biography, headshot, verified stats/reviews, current license and any legally required brokerage disclosures need completion/review before public launch. No deployment has been performed.
+Facebook Instant Forms ingestion, broader anonymous conversion triggers, visitor thank-you delivery and CRM integration continue in Phase 3. The CRM interface remains Phase 4; scheduled alerts, email templates, drips and reminders remain Phase 5. Vapi and MLS access remain later work. See `PLAN.md` and `VERIFICATION.md` for exact scope and test limits.

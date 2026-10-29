@@ -9,8 +9,10 @@ Next.js App Router, React, TypeScript, Tailwind CSS, Node.js server routes, Pris
 ## Phase 1 — Public foundation
 Project setup; Prisma schema, migration and repeatable seed; editable agent config; homepage, listing browser/detail pages/map; eight community pages; About, Contact, Blog, Guides, Privacy, Terms, MLS Disclosure; metadata, sitemap, and RealEstateAgent JSON-LD. Five fictional examples include sale, rental, and commercial properties. Explicit sample mode permits local preview before Supabase is connected. Database errors never silently fall back to samples.
 
-## Phase 2 — Pax
-Homepage and floating chat; streaming OpenAI API calls on the server; validated listing search/details tools; results as cards and map markers. Implement remaining tool capabilities only as their supporting phases arrive. School and risk answers must use identified sources or say information is unavailable. No legal or financial advice.
+## Phase 2 — Pax (expanded by Paul)
+Homepage and floating entry to streamed OpenAI chat; reusable listing tools, sample cards and synchronized map; one-question-at-a-time, value-first conversion prompt; freely saved/viewed homes; persisted transcript/preferences/timeline; visitor-confirmed contact capture; stored saved searches; seller value-report requests; callback requests and operator-confirmed appointments; immediate Paul email or SMS notification adapter with durable outbox/retry worker; local inbox and session-based chats-to-leads/confirmed-appointments reporting. Notifications require provider credentials. This brings the chat-specific conversion primitives forward from Phase 3.
+
+Use only the five fictional samples. Never claim sample tours can be booked. No calendar is connected: requested and confirmed appointments are separate. Saved search criteria are persisted, but automatic matching/alert delivery remains Phase 5. No visitor drip or marketing messages run in Phase 2. Deterministic test mode is explicit, local-only, and forbidden in production.
 
 ## Phase 3 — Lead conversion and Facebook Instant Forms
 - Website: cookie-based visitor identity, visits, viewed/saved homes, search preferences, dwell time, chats, conversion events, and dismissible natural prompts. Browsing and photos remain accessible.

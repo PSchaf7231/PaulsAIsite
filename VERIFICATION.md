@@ -1,28 +1,30 @@
-# Phase 1 verification
+# Phase 2 verification — October 29, 2026
 
-Date: October 29, 2026. Local cloud workspace; no deployment.
+## Passed locally
 
-## Verified
+- **20 Vitest unit/integration checks**: exact sample search/no fabricated matches; freely saved homes; capture only after confirmation; attached viewed/saved history; refusal cooldown; duplicate confirmation and turn IDs; requested versus confirmed appointment metrics; sample-only search status; hot-signal handling; affordability assumptions; hourly limits; persistence checkpoints and locking; same-origin/body-size checks; notification configuration, provider request/idempotency, and failed-delivery retry; production test-mode rejection; unavailable OpenAI behavior.
+- An actual **AI SDK ToolLoopAgent** runs a search tool and continues to a response using the SDK's deterministic mock model. This exercises the production tool factory/agent configuration without a paid live model call.
+- **24 Playwright checks across desktop and mobile**, including the Phase 1 regressions and the full Pax browser → API → local persistence → response flow. Tests cover sample results/map, save without contact, resume, viewed-home logging, lead confirmation and duplicate replay, saved searches, callback requests, decline-and-continue, seller/hot signals, and isolation of another visitor. Cross-origin confirmation requests are rejected. Two additional slow-session checks verify that an initial lookup cannot clear a visitor’s consent.
+- Desktop and mobile visual inspection shows no horizontal overflow, no page JavaScript errors, and matching sample cards/markers.
+- TypeScript passes. Next.js production compilation and prerendering pass (28 static outputs, with three dynamic Pax API routes). No dynamic-filesystem tracing warnings remain in the final build.
+- Deterministic browser test mode is visibly labeled, explicitly enabled only by test settings, and rejected in production/database-storage mode. Test notifications are preview-only. The test suite sends no real email/SMS and makes no live OpenAI calls.
 
-- Five Vitest checks pass: combined filters and price boundaries, rental vs sale behavior, inactive-listing exclusion, stable sorting without source mutation, and distinct/valid sample data.
-- Six Playwright flow checks pass across desktop and mobile: homepage, contact links, honest Pax preview, five cards and five Leaflet markers, synchronized filtering, empty-state reset, rental detail pages, community prefilters, and HTTP 404 for an unknown property.
-- Two additional browser checks exercise the local-image fallback when external image requests fail.
-- TypeScript checking passes.
-- Next.js production build passes: server routes compile and 25 static outputs generate.
-- Thirty public, detail, sitemap, and robots routes return HTTP 200 in sample mode.
-- RealEstateAgent JSON-LD parses and identifies Paul Schafranick.
-- Browser inspection found no JavaScript errors in the homepage/listing flow or horizontal overflow at tested desktop/mobile widths.
-- Local hero image and all image fallbacks load; listing cards and five Leaflet markers render.
-- The source manifest and package lockfile dependency lists match.
+## Live verification still requires Paul's local credentials
 
-## Database setup still needs your password
+- No OpenAI key, real Supabase password, Resend key, or Twilio credentials were available here. Live model behavior, Supabase migration/transactions/RLS, and real provider delivery are **not verified**. Follow the README's acceptance prompts and notification checks after configuring them locally.
+- `PAX_NOTIFICATIONS=off` is the shipped default. That records an unconfigured outbox status; it never reports a successful send. Enable email or SMS and keep the retry worker running for retry delivery.
+- This environment blocks Prisma's schema-engine download host. The matching Prisma 7.10.1 client was generated locally through Prisma's generator packages and WASM schema parsing without downloading the engine. The Next.js production build then ran directly. Normal `npm run build` includes the standard `prisma generate`; standard installation/migration must be confirmed on the Windows laptop with engine-host access.
+- External Unsplash and OpenStreetMap asset hosts are restricted here. Local illustrative image fallbacks, Leaflet map behavior, and marker counts are tested; background tile delivery still needs the laptop's internet connection.
 
-The supplied Supabase project/host are in `.env.example`. The database password has not been supplied, and no connection, migration, seed, or row-level-security behavior has been tested against that live database. The SQL migration and repeatable seed are included. Run the README’s database commands after entering your password locally.
+## Intentional behavior and limits
 
-This environment blocks Prisma's binary download host. For local compilation, the Prisma 7.10.1 client was generated through matching Prisma generator packages using WASM schema parsing without downloading a schema engine. No database operation was simulated. The production Next.js build was run directly after that generation; the normal `npm run build` includes `prisma generate` and still needs access to Prisma's engine host on your laptop. The standard install/migration workflow must be confirmed there.
+- Only the five fictional samples are searchable by Pax. No MLS key or Vapi/voice code is introduced.
+- Contact capture requires a visitor-confirmed card. A call is a request until Paul confirms it with the operator command after agreeing the time with the visitor. Fictional sample showings are rejected. No calendar invitation is fabricated.
+- A saved search stores criteria; it does not claim scheduled alerts are active. Seller reports are requests for Paul, not fabricated valuations. Visitor marketing and drips are not sent.
+- A 30-day HTTP-only conversation cookie identifies each chat. Metrics are session-based, not cross-device person counts. Private inbox/confirmation/insights operations are local CLI commands, with no public admin API.
+- Notifications use an atomic durable outbox within the conversation. Resend requests carry idempotency keys. Twilio retries are at-least-once and may duplicate a message after an ambiguous network failure. Provider acceptance is not proof the recipient read the message.
+- Local file persistence is explicitly development-only and requires removing a stale lock after a crashed process, with all app/worker processes stopped. Production must use database storage. This is still a local-only phase; launch controls and retention policy remain launch preparation.
 
-## External assets and limits
+## Privacy and repository hygiene
 
-The environment blocks Unsplash photos and OpenStreetMap tile requests. The real Leaflet map, coordinates, marker counts, popups, and filter synchronization were checked, but background tile delivery needs verification on your laptop's internet connection. A visible tile-error message is supplied. The hero is local; failed stock images use the labeled local AI-generated illustration. Browser image-fallback tests deliberately abort external image requests and verify the local image loads.
-
-No AI API, lead capture, tracking, Facebook webhook, outbound SMS/email, CRM authentication, campaigns, or hosting were implemented or tested. Those remain in their agreed later phases. No secrets are included in the downloadable archive.
+`.env`, `.env.local`, `.pax-data/`, `.pax-test-data/`, build output, screenshots, and temporary files are ignored. Only empty/placeholder service credentials appear in `.env.example`. The privacy draft now describes actual chat storage, OpenAI processing, and Paul notifications. No secrets or private runtime records belong in Git commits.

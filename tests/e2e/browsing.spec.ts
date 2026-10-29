@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-test("homepage, contact details, and future chat are honest",async({page})=>{
+test("homepage, contact details, and Pax are available",async({page})=>{
  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
  await page.goto("/");await expect(page.getByRole("heading",{name:"A place to live. A life to love."})).toBeVisible();
  await expect(page.locator('a[href="tel:5612557285"]').first()).toBeVisible();
@@ -7,7 +7,7 @@ test("homepage, contact details, and future chat are honest",async({page})=>{
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
  await page.getByRole("link",{name:/Work with Paul/}).click();
  await expect(page.locator('a[href="mailto:paul@palmbeachrealestatepros.com"]').first()).toBeVisible();
- await page.locator(".floating-pax").click();await expect(page.getByText("COMING IN PHASE 2",{exact:true})).toBeVisible();
+ await page.locator(".floating-pax").click();await expect(page.getByRole("heading",{name:"Your next move starts here."})).toBeVisible();
  expect(errors).toEqual([]);
 });
 test("filters and map share results, reset restores all five, and detail opens",async({page})=>{

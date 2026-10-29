@@ -1,4 +1,4 @@
-import PaxPreview from "@/components/pax-preview";
+import PaxChat from "@/components/pax-chat";
 import { pageMetadata } from "@/lib/seo";
-export const metadata=pageMetadata("Meet Pax","A preview of your future Palm Beach County real estate assistant.","/pax");
-export default function Pax(){return <div className="container section"><div className="pax-grid"><div><span className="eyebrow">COMING IN PHASE 2</span><h1>Meet Pax.</h1><p className="muted" style={{marginTop:25}}>Your future starting point for questions about homes and your next move. Live AI chat is not connected yet.</p><p className="muted">Browse homes or contact Paul using these shortcuts. Saved-search alerts arrive in Phase 5.</p></div><PaxPreview/></div></div>}
+export const metadata=pageMetadata("Ask Pax","Explore sample homes, save your search, and plan your next move with Paul Schafranick’s assistant Pax.","/pax");
+export default function Pax(){return <div className="container section"><div className="page-intro" style={{paddingTop:0}}><span className="eyebrow">A LITTLE LOCAL KNOW-HOW</span><h1>Your next move starts here.</h1><p>Explore with Pax, then connect with Paul when you’re ready. Today’s five properties are fictional samples; real listings and automated alerts come later.</p></div><PaxChat/></div>}

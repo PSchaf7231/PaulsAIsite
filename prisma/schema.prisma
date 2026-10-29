@@ -49,3 +49,49 @@ model ListingPhoto {
 
   @@unique([listingId, position])
 }
+
+
+model PaxConversation {
+  id String @id
+  data Json
+  leaseToken String?
+  leaseUntil DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lead PaxLead?
+}
+
+model PaxLead {
+  id String @id
+  conversationId String @unique
+  conversation PaxConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  name String?
+  email String?
+  phone String?
+  source String @default("WEBSITE")
+  stage String @default("NEW_LEAD")
+  preferences Json
+  createdAt DateTime @default(now())
+  appointments PaxAppointment[]
+  searches PaxSavedSearch[]
+}
+
+model PaxAppointment {
+  id String @id
+  leadId String
+  lead PaxLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  kind String
+  preferredTime String
+  status String @default("REQUESTED")
+  confirmedAt DateTime?
+  createdAt DateTime @default(now())
+}
+
+model PaxSavedSearch {
+  id String @id
+  leadId String
+  lead PaxLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  preferences Json
+  status String @default("SAMPLE_ONLY")
+  createdAt DateTime @default(now())
+}

@@ -1,6 +1,8 @@
-# Palm Beach Living — Phase 2: Pax
+# Palm Beach Living — Phase 3: lead conversion
 
 For **Paul Schafranick** · 561-255-7285 · paul@palmbeachrealestatepros.com. Brokerage branding remains omitted. Local development only; nothing is deployed.
+
+**Start here for Phase 3:** [Windows setup, Twilio/Resend keys, Facebook hookup, and plain-English tests](PHASE3-SETUP.md).
 
 Pax now provides streamed AI chat, sample listing search/cards/map, freely saved homes, preference and timeline tracking, confirmed contact capture, saved-search criteria, seller report requests, callback requests, and a durable Paul-notification queue. It uses only the **five fictional sample listings**. No MLS or Vapi integration is connected.
 
@@ -42,44 +44,9 @@ The template contains your project reference `ztkihbwbkzaugqymsxpy` and host `aw
 
 Prisma 7 uses `prisma.config.ts` for its migration URL and a PostgreSQL driver adapter for runtime connections. Do not rerun `prisma init` or copy the older Prisma 6 datasource URL syntax into the schema. No Docker is needed. `db:migrate` applies both committed migrations without a shadow database. Tables use row-level security with anonymous/authenticated Data API access revoked; only server-side database credentials access them.
 
-## Turn on immediate notifications to Paul
+## Instant Paul alerts and lead acknowledgments
 
-Notifications are **off until configured**. They are queued durably when a lead is confirmed or an explicit hot signal appears, and the server attempts delivery immediately. An anonymous hot lead can notify Paul before contact is captured. Contact capture generates a separate alert with the newly supplied details.
-
-Choose one provider in `.env`:
-
-**Email with Resend:**
-
-```dotenv
-PAX_NOTIFICATIONS="email"
-RESEND_API_KEY="YOUR_RESEND_KEY_HERE"
-RESEND_FROM="Pax <your-verified-sender@example.com>"
-PAX_AGENT_EMAIL="paul@palmbeachrealestatepros.com"
-```
-
-Use a sender/domain verified in your own Resend account. Sender restrictions apply to trial accounts.
-
-**SMS with Twilio:**
-
-```dotenv
-PAX_NOTIFICATIONS="sms"
-TWILIO_ACCOUNT_SID="YOUR_ACCOUNT_SID_HERE"
-TWILIO_AUTH_TOKEN="YOUR_AUTH_TOKEN_HERE"
-TWILIO_FROM_NUMBER="YOUR_TWILIO_NUMBER_IN_E164"
-PAX_AGENT_PHONE="+15612557285"
-```
-
-Use a Twilio SMS-capable sender. Trial accounts may require verifying the recipient. Restart the dev server after changing `.env`.
-
-Keep a second PowerShell window open for retry delivery after temporary provider failures:
-
-```powershell
-npm.cmd run pax:worker
-```
-
-Alternatively, run `npm.cmd run pax:retry` for one pass. Retries use backoff and stop after five failed attempts. Resend uses stable idempotency keys. Twilio can deliver a duplicate if it accepts a message but the response is lost; this is an at-least-once outbox, not an exactly-once SMS guarantee. `sent` means the provider accepted the message, not that the phone/email recipient read it. Worker and application must use the same `.env` and storage mode.
-
-No visitor SMS/email campaigns are sent in Phase 2. Saved searches store criteria only. Paul can follow up personally; scheduled matching, alerts and drips remain later work.
+See [PHASE3-SETUP.md](PHASE3-SETUP.md) for exact provider account/key instructions and Facebook setup. Set `PAX_NOTIFICATIONS="both"` after configuring Resend and Twilio. Paul’s alerts go to **exppbc@gmail.com** and **+15612557285**. Lead acknowledgments use separately opted-in channels; no recurring campaign or listing-alert scheduler runs yet. Keep `npm.cmd run pax:worker` running for recovery/retry. Use `preview` for local tests with no real sending.
 
 ## What to test
 
@@ -98,7 +65,7 @@ No visitor SMS/email campaigns are sent in Phase 2. Saved searches store criteri
 
 ## Inbox, actual confirmations, and conversion reporting
 
-Until the Phase 4 CRM exists, use these **local operator commands**. They are not exposed as public web endpoints:
+Until the Phase 4 visual CRM exists, use these **local operator commands**. They are not exposed as public web endpoints:
 
 ```powershell
 npm.cmd run pax:inbox
@@ -115,7 +82,7 @@ npm.cmd run pax:confirm -- APPOINTMENT_ID "2026-11-07T10:00:00-05:00"
 
 Replace both example arguments. This records a confirmation and adds it to the visitor’s chat history; it does not send an external calendar invitation or contact the visitor for you. Confirm the time with the visitor directly first.
 
-Insights reports chats, captured leads, leads with appointment requests, leads with confirmed appointments, chats-to-leads, and leads-to-confirmed-appointments. It counts conversation sessions, not deduplicated humans across devices. An unconfirmed request never counts as a booked appointment. There are no main-screen charts.
+Insights reports total leads, website/Facebook lead counts, anonymous visitors, chats, captured leads, leads with appointment requests, leads with confirmed appointments, chats-to-leads, and leads-to-confirmed-appointments. It counts conversation sessions, not deduplicated humans across devices. An unconfirmed request never counts as a booked appointment. There are no main-screen charts.
 
 ## Agent config and architecture
 

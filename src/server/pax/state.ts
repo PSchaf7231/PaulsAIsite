@@ -3,10 +3,10 @@ import type { Contact, PaxState, Preference, ActionKind, PendingAction } from ".
 import { sampleListings,searchSampleListings } from "../listings/sample";
 export { sampleListings };
 export function now(){return new Date().toISOString();}
-export function newState(id:string):PaxState{return {id,createdAt:now(),updatedAt:now(),messages:[],preferences:{},results:[],viewed:[],saved:[],actions:[],events:[],searches:[],appointments:[],notifications:[],processedTurns:[],lastAskTurn:-10,declinedAtTurn:-10};}
+export function newState(id:string):PaxState{return {id,source:"WEBSITE",createdAt:now(),updatedAt:now(),messages:[],preferences:{},results:[],viewed:[],saved:[],actions:[],events:[],searches:[],appointments:[],notifications:[],processedTurns:[],lastAskTurn:-10,declinedAtTurn:-10};}
 export function event(state:PaxState,kind:string,detail?:string,listingSlug?:string){state.events.push({kind,at:now(),...(detail?{detail}:{}),...(listingSlug?{listingSlug}:{})});state.updatedAt=now();}
 export function search(state:PaxState,filters:Preference){
- const results=searchSampleListings({city:filters.area,maxPrice:filters.maxPrice,beds:filters.beds,type:filters.type});
+ const results=searchSampleListings({city:filters.area,minPrice:filters.minPrice,maxPrice:filters.maxPrice,beds:filters.beds,type:filters.type});
  state.results=results.map(l=>l.slug);event(state,"search",JSON.stringify(filters));
  return {sampleOnly:true,count:results.length,listings:results,message:results.length?"Fictional samples, not live or tourable inventory.":"No matching samples. Do not invent alternatives; offer to change one filter or ask Paul about real inventory."};
 }
@@ -46,8 +46,8 @@ export function propose(state:PaxState,input:{kind:ActionKind;contact:Contact;pr
 export function notify(state:PaxState,reason:string){
  if(state.notifications.some(n=>n.reason===reason))return;
  const p=state.preferences;
- const summary=[`Pax ${reason}.`,state.lead?.name||"Website visitor",state.lead?.phone||state.lead?.email||"No contact yet",p.intent||"Exploring",p.area||"Palm Beach County",p.maxPrice?`budget $${p.maxPrice}`:"",p.beds?`${p.beds}+ beds`:"",p.timeline?`timeline: ${p.timeline}`:"",p.preApproved?"Pre-approved":"",`${state.saved.length} saved / ${state.viewed.length} viewed`,state.appointments.at(-1)?.preferredTime||""].filter(Boolean).join(" · ").slice(0,900);
- state.notifications.push({id:randomUUID(),reason,summary,status:"pending",attempts:0,nextAttemptAt:now()});
+ const summary=[`Pax ${reason}.`,state.lead?.name||"Website visitor",[state.lead?.phone,state.lead?.email].filter(Boolean).join(" / ")||"No contact yet",p.intent||"Exploring",p.area||"Palm Beach County",p.maxPrice?`budget $${p.maxPrice}`:"",p.beds?`${p.beds}+ beds`:"",p.timeline?`timeline: ${p.timeline}`:"",p.preApproved?"Pre-approved":"",`Source: ${state.source||"WEBSITE"}`,state.wanted||"",`Viewed: ${state.viewed.join(", ")||"none"}; saved: ${state.saved.join(", ")||"none"}`,state.appointments.at(-1)?.preferredTime||""].filter(Boolean).join(" · ").slice(0,900);
+ for(const channel of ["email","sms"] as const)state.notifications.push({id:randomUUID(),reason,summary,status:"pending",attempts:0,nextAttemptAt:now(),channel,audience:"agent"});
  event(state,"agent_notification_queued",reason);
 }
 export function confirmAction(state:PaxState,id:string,accepted:boolean){
@@ -78,5 +78,5 @@ export function flagHot(state:PaxState,reason:string){
 export function metrics(states:PaxState[]){
  const chats=states.filter(s=>s.messages.some(m=>m.role==="user"));
  const leads=chats.filter(s=>s.lead);const requested=leads.filter(s=>s.appointments.length);const booked=leads.filter(s=>s.appointments.some(a=>a.status==="CONFIRMED"));
- return {chats:chats.length,leads:leads.length,leadsWithAppointmentRequests:requested.length,leadsWithConfirmedAppointments:booked.length,chatsToLeads:chats.length?leads.length/chats.length:0,leadsToAppointments:leads.length?booked.length/leads.length:0,definition:"Session-based funnel; requests are separate from Paul-confirmed appointments. Multiple devices are not deduplicated people."};
+ return {totalLeads:states.filter(s=>s.lead).length,websiteLeads:states.filter(s=>s.lead&&s.source!=="FACEBOOK_FORM").length,facebookLeads:states.filter(s=>s.lead&&s.source==="FACEBOOK_FORM").length,anonymousVisitors:states.filter(s=>s.activity&&!s.lead).length,chats:chats.length,leads:leads.length,leadsWithAppointmentRequests:requested.length,leadsWithConfirmedAppointments:booked.length,chatsToLeads:chats.length?leads.length/chats.length:0,leadsToAppointments:leads.length?booked.length/leads.length:0,definition:"Session-based funnel; requests are separate from Paul-confirmed appointments. Multiple devices are not deduplicated people."};
 }

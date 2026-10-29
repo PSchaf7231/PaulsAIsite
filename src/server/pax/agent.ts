@@ -25,7 +25,7 @@ export async function streamPax(state:PaxState,onText:(text:string)=>void,signal
 
 export function createPaxAgent(state:PaxState,model:LanguageModel,checkpoint:()=>Promise<void>=async()=>{}){
  return new ToolLoopAgent({
-  model,instructions:paxSystemPrompt(state),tools:paxTools(state,async()=>{await checkpoint();await dispatchQueued(state);await checkpoint();}),
+  model,instructions:paxSystemPrompt(state),tools:paxTools(state,async()=>{await checkpoint();await dispatchQueued(state,checkpoint);await checkpoint();}),
   onError:()=>{},onStepFinish:async()=>{await checkpoint();},stopWhen:isStepCount(5),toolCallConcurrency:1,maxOutputTokens:700,maxRetries:1,
  });
 }

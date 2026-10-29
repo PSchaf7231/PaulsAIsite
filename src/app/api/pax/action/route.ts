@@ -1,3 +1,4 @@
+import { queueFollowup } from "@/server/pax/conversion";
 import { after } from "next/server";
 import { z } from "zod";
 import { readBody,identity,routeError,RequestError } from "@/server/pax/security";
@@ -7,7 +8,7 @@ import { publicPaxState } from "@/lib/pax";
 import { flushNotifications } from "@/server/pax/notifications";
 import { randomUUID } from "node:crypto";
 const schema=z.discriminatedUnion("type",[
- z.object({type:z.literal("confirm"),actionId:z.string().uuid(),accepted:z.boolean()}).strict(),
+ z.object({type:z.literal("confirm"),actionId:z.string().uuid(),accepted:z.boolean(),smsConsent:z.boolean().default(false),emailConsent:z.boolean().default(false)}).strict(),
  z.object({type:z.enum(["save","view"]),slug:z.string().min(1).max(100)}).strict()
 ]);
 export async function POST(req:Request){try{
@@ -19,7 +20,9 @@ export async function POST(req:Request){try{
   if(data.type==="confirm"){
    const previous=state.actions.find(a=>a.id===data.actionId);if(!previous)throw new RequestError("This action does not belong to your chat.",404);
    const wasPending=previous.status==="pending";
+   if(wasPending&&data.accepted)state.communicationConsent={sms:data.smsConsent,email:data.emailConsent,at:now(),method:"website chat confirmation"};
    const response=confirmAction(state,data.actionId,data.accepted);
+   if(wasPending&&data.accepted)queueFollowup(state);
    if(wasPending&&"message" in response)state.messages.push({id:randomUUID(),role:"assistant",text:response.message!,at:now()});
    return response;
   }

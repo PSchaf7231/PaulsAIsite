@@ -2,12 +2,13 @@ import "dotenv/config";
 import { listSessions,withSession,closePaxDb } from "../src/server/pax/store";
 import { metrics,event,now } from "../src/server/pax/state";
 import { flushNotifications,notificationHealth } from "../src/server/pax/notifications";
+import { processFacebook } from "../src/server/pax/facebook";
 async function main(){
  const command=process.argv[2]||"insights";
  if(command==="insights"){console.log(JSON.stringify(metrics(await listSessions()),null,2));return;}
  if(command==="inbox"){
   const sessions=await listSessions();
-  for(const s of sessions.filter(s=>s.lead||s.notifications.length))console.log(JSON.stringify({conversation:s.id,contact:s.lead||"No contact yet",wanted:s.preferences,viewed:s.viewed,saved:s.saved,requests:s.actions.filter(a=>a.status==="confirmed"),appointments:s.appointments,notifications:notificationHealth(s),transcript:s.messages},null,2));
+  for(const s of sessions.filter(s=>s.lead||s.notifications.length))console.log(JSON.stringify({conversation:s.id,contact:s.lead||"No contact yet",source:s.source||"WEBSITE",wanted:s.wanted,preferences:s.preferences,activity:s.activity,consent:s.communicationConsent,facebook:s.facebook,deliveries:s.notifications,viewed:s.viewed,saved:s.saved,requests:s.actions.filter(a=>a.status==="confirmed"),appointments:s.appointments,notifications:notificationHealth(s),transcript:s.messages},null,2));
   return;
  }
  if(command==="confirm"){
@@ -22,7 +23,7 @@ async function main(){
   console.log("Appointment marked confirmed. This does not send the visitor a message outside chat; contact them directly to confirm.");return;
  }
  if(command==="retry"||command==="worker"){
-  async function retry(){for(const state of await listSessions()){if(state.notifications.some(n=>["pending","retry","unconfigured"].includes(n.status)))try{await flushNotifications(state.id);}catch{console.error("A conversation is busy or unavailable; the next retry will pick it up.");}}}
+  async function retry(){for(const state of await listSessions()){if(state.facebook?.status==="pending")try{await processFacebook(state.id);}catch{console.error("Facebook intake retry deferred.");}if(state.notifications.some(n=>["pending","retry","unconfigured"].includes(n.status)))try{await flushNotifications(state.id);}catch{console.error("A conversation is busy or unavailable; the next retry will pick it up.");}}}
   await retry();if(command==="worker"){console.log("Pax notification retry worker is running. Keep this terminal open; Ctrl+C stops it.");setInterval(()=>void retry().catch(()=>console.error("Retry pass failed; will retry on the next interval.")),60000);}return;
  }
  throw new Error("Unknown Pax admin command.");

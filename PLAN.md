@@ -14,24 +14,12 @@ Homepage and floating entry to streamed OpenAI chat; reusable listing tools, sam
 
 Use only the five fictional samples. Never claim sample tours can be booked. No calendar is connected: requested and confirmed appointments are separate. Saved search criteria are persisted, but automatic matching/alert delivery remains Phase 5. No visitor drip or marketing messages run in Phase 2. Deterministic test mode is explicit, local-only, and forbidden in production.
 
-## Phase 3 — Lead conversion and Facebook Instant Forms
-- Website: cookie-based visitor identity, visits, viewed/saved homes, search preferences, dwell time, chats, conversion events, and dismissible natural prompts. Browsing and photos remain accessible.
-- One shared lead intake service handles website and Facebook inputs; creates or matches a lead, attaches available context, sets New Lead for new contacts, and queues agent notifications and visitor acknowledgment. Repeat submissions do not reset an established lead's stage.
-- Preserve both original source and individual submissions: `WEBSITE` or `FACEBOOK_INSTANT_FORM`. A returning contact can have more than one touchpoint without losing the first source.
-- Facebook webhook: GET verification challenge; POST raw-body signature validation with Meta app secret; durable event receipt and fast acknowledgment; fetch form answers server-side using the authorized Page token; map names, phone/email, and custom preference fields.
-- Store Facebook leadgen ID, Page ID, form ID and form name; ad/ad-set/campaign IDs where actually supplied or retrievable with granted permissions. Do not invent missing attribution.
-- Use the Facebook leadgen ID as an idempotency key; retry fetch/delivery failures with backoff and an inspectable failure log. Prevent duplicate acknowledgments and agent alerts on webhook retries.
-- Keep matching conservative: exact normalized contact information, no speculative person matching. Preserve raw source context with appropriate retention and access controls.
-- Capture channel-specific consent and Facebook form consent evidence. Send follow-up only through an eligible channel, respect opt-outs, and route missing consent/contact details to the agent for review. Website browsing history exists only for website visits; Facebook leads receive form/ad context instead.
-- Agent alerts include source, name/contact, intent summary and available property interests. Website chat starts also trigger agent notifications as specified.
-- Add future CRM lead/source data in this phase; the visual admin arrives in Phase 4. Basic source fields do not depend on having the admin UI.
-- Acknowledgment uses a fixed, approved Pax/agent template initially; no unsupported promises. Attach saved homes when present. Automated campaign schedules and new-listing alerts remain Phase 5.
+## Phase 3 — Lead conversion and Facebook Instant Forms (implemented)
+Cookie-based anonymous views, searches, favorites, return visits and approximate visible-tab time. Dismissible offers after interest, a 24-hour refusal cooldown, open photos/listings, optional name/contact/interests/timeline capture with attached history. Shared website and Facebook capture with sources `WEBSITE` and `FACEBOOK_FORM`; individual contacts are not automatically merged across devices or sources.
 
-### Facebook setup needed in Phase 3
-Meta developer app, authorized Facebook Page and Instant Form, Page lead-access permissions (including `leads_retrieval` and permissions needed for webhook subscriptions), a securely stored Page access token, app secret, and verification token. Exact permission/review requirements depend on the app and Page ownership. Subscribe the Page's `leadgen` field and validate with Meta's Lead Ads Testing Tool. Local testing needs a public HTTPS tunnel for webhook delivery; hosting remains deferred. No app tokens are needed for Phase 1.
+Separate immediate email and SMS alerts to Paul and per-channel opted-in visitor acknowledgments. Durable independent deliveries, retry worker, provider acceptance status. Facebook raw-body signature validation, Page/form allowlist, durable receipt before acknowledgment, server-side Page-token retrieval, leadgen-ID deduplication, explicit consent field evidence and available form/ad metadata. Existing `PaxConversation` JSON stores activity/jobs/consent; the same `PaxLead` table stores both sources. No new tables required.
 
-### Phase 3 tables
-`visitors`, `visits`, `activity_events`, `leads`, `lead_submissions`, `saved_homes`, `search_preferences`, `communication_consents`, `communications`, `jobs`, `webhook_events`. Unique provider/event IDs protect ingestion; unique delivery keys protect messages. Phase 2 adds `conversations` and `messages` first.
+Provider credentials and Meta sender/Page setup are operator tasks documented in [PHASE3-SETUP.md](PHASE3-SETUP.md). No automatic listing alerts, recurring campaigns, cross-source person matching, deployment, or visual CRM in this phase.
 
 ## Phase 4 — Calm CRM
 Single-agent admin login; six-column pipeline (New Lead, Engaged, Appointment, Under Contract, Closed, Lost); drag-and-drop plus accessible stage controls; detail page with source, contact, transcript or Facebook form context, activity, preferences, notes and next follow-up; Today; listings manager. One menu: Pipeline, Today, Emails, Settings. No main-screen charts. Tables: admin users/sessions, notes, stage history, tasks, showings.

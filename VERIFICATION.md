@@ -1,30 +1,37 @@
-# Phase 2 verification — October 29, 2026
+# Phase 3 verification — October 29, 2026
 
-## Passed locally
+## Story and evidence
 
-- **20 Vitest unit/integration checks**: exact sample search/no fabricated matches; freely saved homes; capture only after confirmation; attached viewed/saved history; refusal cooldown; duplicate confirmation and turn IDs; requested versus confirmed appointment metrics; sample-only search status; hot-signal handling; affordability assumptions; hourly limits; persistence checkpoints and locking; same-origin/body-size checks; notification configuration, provider request/idempotency, and failed-delivery retry; production test-mode rejection; unavailable OpenAI behavior.
-- An actual **AI SDK ToolLoopAgent** runs a search tool and continues to a response using the SDK's deterministic mock model. This exercises the production tool factory/agent configuration without a paid live model call.
-- **24 Playwright checks across desktop and mobile**, including the Phase 1 regressions and the full Pax browser → API → local persistence → response flow. Tests cover sample results/map, save without contact, resume, viewed-home logging, lead confirmation and duplicate replay, saved searches, callback requests, decline-and-continue, seller/hot signals, and isolation of another visitor. Cross-origin confirmation requests are rejected. Two additional slow-session checks verify that an initial lookup cannot clear a visitor’s consent.
-- Desktop and mobile visual inspection shows no horizontal overflow, no page JavaScript errors, and matching sample cards/markers.
-- TypeScript passes. Next.js production compilation and prerendering pass (28 static outputs, with three dynamic Pax API routes). No dynamic-filesystem tracing warnings remain in the final build.
-- Deterministic browser test mode is visibly labeled, explicitly enabled only by test settings, and rejected in production/database-storage mode. Test notifications are preview-only. The test suite sends no real email/SMS and makes no live OpenAI calls.
+A visitor browses samples → first-party activity endpoint → private visitor record → optional lead form/chat confirmation → same lead and activity history → independent Paul/visitor delivery queue. A signed Facebook event → durable receipt → server-side lead retrieval → the same lead/capture/delivery pipeline.
 
-## Live verification still requires Paul's local credentials
+- **28 Vitest unit/integration checks passed.** This includes existing listing/AI-tool/chat/security tests and new tests for interest thresholds, time tracking, dismissal cooldown, clearing search filters, contact validation, consent-gated acknowledgments, source tagging, duplicate capture, independent email/SMS retries, Facebook raw-body signatures, Page/form allowlists, durable receipt/retrieval, consent mapping, duplicate webhooks and retrieval failure recovery.
+- **30 distinct Playwright desktop/mobile checks passed after fixes**, including all Phase 1/2 regressions and the anonymous favorite → soft offer → lead form → stored activity/consent flow. Tests verify decline-and-browse, isolated visitors, sample cards/map, chat capture, requested callbacks, and Facebook challenge/signature/replay handling through real HTTP routes. Targeted reruns cover the fixed Facebook replay race and final listing/filter/favorite changes.
+- TypeScript checks and the **Next.js production build** passed. The build uses the existing generated Prisma client; Prisma schema/dependencies are unchanged. The earlier engine-download restriction remains relevant to running standard `prisma generate` in this environment. Standard Windows install/migration commands remain in README.
+- Browser tests use explicit local storage, deterministic chat replies and preview notification mode. HTTP Facebook tests use test-only secrets and leave retrieval pending without a Page token. Provider-fetch tests use mocked Facebook/Resend/Twilio responses. No test sends real email/SMS, calls live Meta, or makes a paid AI request.
 
-- No OpenAI key, real Supabase password, Resend key, or Twilio credentials were available here. Live model behavior, Supabase migration/transactions/RLS, and real provider delivery are **not verified**. Follow the README's acceptance prompts and notification checks after configuring them locally.
-- `PAX_NOTIFICATIONS=off` is the shipped default. That records an unconfigured outbox status; it never reports a successful send. Enable email or SMS and keep the retry worker running for retry delivery.
-- This environment blocks Prisma's schema-engine download host. The matching Prisma 7.10.1 client was generated locally through Prisma's generator packages and WASM schema parsing without downloading the engine. The Next.js production build then ran directly. Normal `npm run build` includes the standard `prisma generate`; standard installation/migration must be confirmed on the Windows laptop with engine-host access.
-- External Unsplash and OpenStreetMap asset hosts are restricted here. Local illustrative image fallbacks, Leaflet map behavior, and marker counts are tested; background tile delivery still needs the laptop's internet connection.
+## Issues found and fixed
 
-## Intentional behavior and limits
+- An initial anonymous session no longer silently checks the chat consent box. Existing acknowledged chats still resume normally.
+- Browser activity is serialized and contact/chat submission waits for initial tracking, avoiding a first-visit cookie race.
+- Both channels are independently queued/checkpointed; database lease checkpoints renew during provider operations. One channel failure does not erase a successful delivery on the other.
+- Repeat Facebook events acknowledge an already committed receipt without contending with the retrieval worker. Concurrent first receipts still fail safely for retry if storage is busy.
+- Blank/malformed contact is rejected before storage. Search resets remove stale filter preferences. Favorites work on both listing cards and detail pages.
 
-- Only the five fictional samples are searchable by Pax. No MLS key or Vapi/voice code is introduced.
-- Contact capture requires a visitor-confirmed card. A call is a request until Paul confirms it with the operator command after agreeing the time with the visitor. Fictional sample showings are rejected. No calendar invitation is fabricated.
-- A saved search stores criteria; it does not claim scheduled alerts are active. Seller reports are requests for Paul, not fabricated valuations. Visitor marketing and drips are not sent.
-- A 30-day HTTP-only conversation cookie identifies each chat. Metrics are session-based, not cross-device person counts. Private inbox/confirmation/insights operations are local CLI commands, with no public admin API.
-- Notifications use an atomic durable outbox within the conversation. Resend requests carry idempotency keys. Twilio retries are at-least-once and may duplicate a message after an ambiguous network failure. Provider acceptance is not proof the recipient read the message.
-- Local file persistence is explicitly development-only and requires removing a stale lock after a crashed process, with all app/worker processes stopped. Production must use database storage. This is still a local-only phase; launch controls and retention policy remain launch preparation.
+## Not live-verified
 
-## Privacy and repository hygiene
+Real Supabase transactions/permissions and real Meta, Twilio and Resend delivery require Paul's configured accounts. The OpenAI key is private local configuration and was not used for these tests. No live credentials are included in repository files. No new database migration is necessary: Phase 3 extends existing conversation JSON and projects source, contact and preferences into the existing lead table.
 
-`.env`, `.env.local`, `.pax-data/`, `.pax-test-data/`, build output, screenshots, and temporary files are ignored. Only empty/placeholder service credentials appear in `.env.example`. The privacy draft now describes actual chat storage, OpenAI processing, and Paul notifications. No secrets or private runtime records belong in Git commits.
+External image/tile hosts remain restricted in this environment. Browser tests exercise local image fallbacks and map marker behavior; full tile delivery depends on the laptop's internet access.
+
+## Operating limits
+
+- Default notification mode is off; use preview for no-send local testing and both for configured real delivery. Preview jobs are terminal test records, never automatically resent. The recovery worker must run alongside the server.
+- Immediate means the initial send is attempted after saving; provider setup, network outages and worker scheduling affect delivery. Sent means API acceptance, not final delivery/read receipt. Twilio can duplicate after an ambiguous timeout; Resend uses stable idempotency keys.
+- One acknowledgment per opted-in channel per website visitor/Facebook submission; no recurring marketing or new-listing alert scheduler. Twilio handles standard STOP for supported senders; no inbound conversation automation is added.
+- Activity time is approximate visible-tab time sampled every 30 seconds. A browser-tab session identifies a visit. Cookie identity does not deduplicate people across devices; separate Facebook leadgen IDs are separate submissions.
+- Five fictional samples only. No sample tours, automatic calendar bookings, MLS, voice, or deployment. Public photos and listings remain open.
+- Private inbox/insights stay local operator commands. Supabase RLS/role restrictions remain from Phase 2. Activity, form evidence and notification payloads contain private data; keep runtime files and command output private. Production abuse controls and retention policy remain launch preparation.
+
+## Repository hygiene
+
+`.env`, `.env.local`, private activity/conversation files, build output and test artifacts stay ignored. `.env.example` contains only placeholders, nonsecret IDs/defaults and Paul’s approved alert recipients. Local `.env` provider/Facebook placeholders were added without overwriting the OpenAI or database credentials. No real messages were sent during implementation.

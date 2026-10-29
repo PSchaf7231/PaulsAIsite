@@ -20,7 +20,7 @@ export async function POST(req:Request){try{
    const {state}=await withSession(id,async (state,checkpoint)=>{
     if(!prepareTurn(state,input.data.turnId,input.data.text))return;
     await checkpoint();
-    await dispatchQueued(state);
+    await dispatchQueued(state,checkpoint);
     await checkpoint();
     const text=await streamPax(state,chunk=>send({type:"text",text:chunk}),AbortSignal.any([req.signal,AbortSignal.timeout(65000)]),checkpoint);
     finishTurn(state,input.data.turnId,text);

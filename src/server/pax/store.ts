@@ -49,14 +49,14 @@ export async function withSession<T>(id:string,fn:(state:PaxState,checkpoint:()=
  if(!claimed.count)throw new PaxBusyError("A reply is already in progress.");
  try{
   const state=(await readSession(id))!;
-  const checkpoint=async()=>{const result=await client.paxConversation.updateMany({where:{id,leaseToken:token,leaseUntil:{gt:new Date()}},data:{data:json(state)}});if(!result.count)throw new PaxBusyError("Conversation lease expired.");};
+  const checkpoint=async()=>{const result=await client.paxConversation.updateMany({where:{id,leaseToken:token,leaseUntil:{gt:new Date()}},data:{data:json(state),leaseUntil:new Date(Date.now()+120000)}});if(!result.count)throw new PaxBusyError("Conversation lease expired.");};
   const value=await fn(state,checkpoint);state.updatedAt=now();
   await client.$transaction(async tx=>{
    const saved=await tx.paxConversation.updateMany({where:{id,leaseToken:token,leaseUntil:{gt:new Date()}},data:{data:json(state),leaseToken:null,leaseUntil:null}});
    if(!saved.count)throw new PaxBusyError("Conversation lease expired; please retry.");
    if(state.lead){
     const lead=state.lead;
-    await tx.paxLead.upsert({where:{conversationId:id},create:{id:lead.id,conversationId:id,name:lead.name,email:lead.email,phone:lead.phone,preferences:json(state.preferences),createdAt:new Date(lead.capturedAt)},update:{name:lead.name,email:lead.email,phone:lead.phone,preferences:json(state.preferences)}});
+    await tx.paxLead.upsert({where:{conversationId:id},create:{id:lead.id,conversationId:id,name:lead.name,email:lead.email,phone:lead.phone,source:state.source||"WEBSITE",preferences:json({...state.preferences,wanted:state.wanted}),createdAt:new Date(lead.capturedAt)},update:{name:lead.name,email:lead.email,phone:lead.phone,source:state.source||"WEBSITE",preferences:json({...state.preferences,wanted:state.wanted})}});
     for(const a of state.appointments)await tx.paxAppointment.upsert({where:{id:a.id},create:{...a,leadId:lead.id,createdAt:new Date(a.createdAt),confirmedAt:a.confirmedAt?new Date(a.confirmedAt):null},update:{status:a.status,confirmedAt:a.confirmedAt?new Date(a.confirmedAt):null}});
     for(const s of state.searches)await tx.paxSavedSearch.upsert({where:{id:s.id},create:{id:s.id,leadId:lead.id,preferences:json(s.preferences),status:s.status,createdAt:new Date(s.createdAt)},update:{}});
    }

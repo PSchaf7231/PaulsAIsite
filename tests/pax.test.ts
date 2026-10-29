@@ -26,7 +26,7 @@ describe("Pax conversion boundaries",()=>{
   const a=propose(s,{kind:"CONTACT",contact:{email:"test@example.com"}});if("error" in a)throw Error(a.error);
   expect(s.lead).toBeUndefined();confirmAction(s,a.id,true);confirmAction(s,a.id,true);
   expect(s.lead?.email).toBe("test@example.com");expect(s.saved).toEqual(["delray-courtyard"]);expect(s.viewed).toEqual(["delray-courtyard"]);
-  expect(s.events.filter(e=>e.kind==="lead_captured")).toHaveLength(1);expect(s.notifications).toHaveLength(1);
+  expect(s.events.filter(e=>e.kind==="lead_captured")).toHaveLength(1);expect(s.notifications).toHaveLength(2);
  });
  it("rejects invented contact and cannot schedule a fictional sample",()=>{
   const s=contactState();expect(propose(s,{kind:"CONTACT",contact:{email:"invented@example.com"}})).toHaveProperty("error");
@@ -47,7 +47,7 @@ describe("Pax conversion boundaries",()=>{
  });
  it("deduplicates retries and detects explicit hot signals without treating a negative as positive",()=>{
   const s=newState(id),turn=randomUUID();expect(prepareTurn(s,turn,"I'm pre-approved and moving within 60 days")).toBe(true);
-  expect(s.notifications).toHaveLength(2);expect(prepareTurn(s,turn,"I'm pre-approved and moving within 60 days")).toBe(true);expect(s.messages).toHaveLength(1);
+  expect(s.notifications).toHaveLength(4);expect(prepareTurn(s,turn,"I'm pre-approved and moving within 60 days")).toBe(true);expect(s.messages).toHaveLength(1);
   finishTurn(s,turn,"Here are the samples.");expect(prepareTurn(s,turn,"I'm pre-approved and moving within 60 days")).toBe(false);
   const negative=newState("b".repeat(64));prepareTurn(negative,randomUUID(),"I'm not pre-approved and I'm not moving within 60 days");expect(negative.notifications).toHaveLength(0);
  });

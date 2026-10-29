@@ -1,0 +1,8 @@
+'use client';
+import { useEffect,useState } from 'react';
+import { smsLink } from '@/lib/sms';
+export default function SuggestedTexts({phone,suggestions}:{phone?:string;suggestions:string[]}){
+ const [texts,setTexts]=useState(suggestions),[ios,setIos]=useState(false),[status,setStatus]=useState(''),[ready,setReady]=useState(false);
+ useEffect(()=>{setIos(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1));setReady(true);},[]);
+ return <section className="suggested-texts"><h2>Pax’s 3 suggested texts</h2><p>Review or edit a draft, then tap it to open your texting app. You choose whether to send it from your own number.</p>{!phone&&<p>This lead has no phone number. You can copy a draft or follow up by email.</p>}{texts.map((text,i)=>{const href=phone&&ready?smsLink(phone,text,ios):null;return <article className="text-draft" key={i}><label>Suggested text {i+1}<textarea disabled={!ready} value={text} onChange={e=>{const value=e.target.value;setTexts(previous=>previous.map((t,j)=>j===i?value:t));}} maxLength={1200} rows={5}/></label><div className="actions">{href&&text.trim()?<a className="btn" href={href} onClick={()=>setStatus('Texting app opened or requested. Nothing is marked sent here; review and send on your phone.')}>Open text {i+1}</a>:<span>Add a phone number or copy the draft.</span>}<button className="btn outline" disabled={!ready} onClick={async()=>{try{await navigator.clipboard.writeText(text);setStatus('Draft copied.');}catch{setStatus('Select the draft text to copy it manually.');}}}>Copy text {i+1}</button></div></article>;})}{status&&<p role="status">{status}</p>}</section>;
+}

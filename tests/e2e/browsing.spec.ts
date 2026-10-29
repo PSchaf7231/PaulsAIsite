@@ -7,7 +7,7 @@ test("homepage, contact details, and Pax are available",async({page})=>{
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
  await page.getByRole("link",{name:/Work with Paul/}).click();
  await expect(page.locator('a[href="mailto:paul@palmbeachrealestatepros.com"]').first()).toBeVisible();
- await page.locator(".floating-pax").click();await expect(page.getByRole("heading",{name:"Your next move starts here."})).toBeVisible();
+ await page.locator(".floating-pax").click();await expect(page.getByRole("dialog",{name:"Ask Pax"})).toBeVisible();
  expect(errors).toEqual([]);
 });
 test("filters and map share results, reset restores all five, and detail opens",async({page})=>{
@@ -26,7 +26,7 @@ test("community links prefilter and unknown listing returns 404",async({page})=>
  const response=await page.goto("/listings/does-not-exist");expect(response?.status()).toBe(404);await expect(page.getByRole("heading",{name:"Let’s get you back home."})).toBeVisible();
 });
 test("local illustration replaces an unavailable external photo",async({page})=>{
- await page.route('https://images.unsplash.com/**',route=>route.abort());
+ await page.route('**/_next/image?*',route=>new URL(route.request().url()).searchParams.get('url')?.startsWith('https://images.unsplash.com/')?route.abort():route.continue());
  await page.goto('/listings');
  const photo=page.getByTestId('listing-card').first().locator('img');
  await page.getByTestId("listing-card").first().scrollIntoViewIfNeeded();

@@ -1,3 +1,5 @@
+import { saveConfirmedSearch } from "./search-criteria";
+import { automaticSms } from "./delivery-settings";
 import { randomUUID } from "node:crypto";
 import type { Contact, PaxState, Preference, ActionKind, PendingAction } from "../../lib/pax";
 import { sampleListings,searchSampleListings } from "../listings/sample";
@@ -6,8 +8,8 @@ export function now(){return new Date().toISOString();}
 export function newState(id:string):PaxState{return {id,source:"WEBSITE",createdAt:now(),updatedAt:now(),messages:[],preferences:{},results:[],viewed:[],saved:[],actions:[],events:[],searches:[],appointments:[],notifications:[],processedTurns:[],lastAskTurn:-10,declinedAtTurn:-10};}
 export function event(state:PaxState,kind:string,detail?:string,listingSlug?:string){state.events.push({kind,at:now(),...(detail?{detail}:{}),...(listingSlug?{listingSlug}:{})});state.updatedAt=now();}
 export function search(state:PaxState,filters:Preference){
- const results=searchSampleListings({city:filters.area,minPrice:filters.minPrice,maxPrice:filters.maxPrice,beds:filters.beds,type:filters.type});
- state.results=results.map(l=>l.slug);event(state,"search",JSON.stringify(filters));
+ const all=searchSampleListings({city:filters.area,minPrice:filters.minPrice,maxPrice:filters.maxPrice,beds:filters.beds,type:filters.type});
+ const results=all.slice(0,6);state.hasMoreResults=all.length>6;state.results=results.map(l=>l.slug);event(state,"search",JSON.stringify(filters));
  return {sampleOnly:true,count:results.length,listings:results,message:results.length?"Fictional samples, not live or tourable inventory.":"No matching samples. Do not invent alternatives; offer to change one filter or ask Paul about real inventory."};
 }
 export function home(state:PaxState,slug:string,save=false){
@@ -17,6 +19,7 @@ export function home(state:PaxState,slug:string,save=false){
  return {listing,sampleOnly:true,saved:save};
 }
 export function updatePreferences(state:PaxState,preferences:Preference){
+ if(Object.entries(preferences).some(([k,v])=>v!==undefined&&JSON.stringify(v)!==JSON.stringify((state.preferences as Record<string,unknown>)[k])))for(const a of state.actions)if(a.kind==="SEARCH"&&a.status==="pending")a.status="declined";
  state.preferences={...state.preferences,...Object.fromEntries(Object.entries(preferences).filter(([,value])=>value!==undefined))};event(state,"preferences_updated",JSON.stringify(preferences));
  return state.preferences;
 }
@@ -32,8 +35,8 @@ export function propose(state:PaxState,input:{kind:ActionKind;contact:Contact;pr
  const contact=normalizeContact(input.contact);
  const spoken=state.messages.filter(m=>m.role==="user").map(m=>m.text).join("\n");
  // A model may only propose contact information actually supplied in this conversation.
- if(contact.email&&!spoken.toLowerCase().includes(contact.email))return {error:"Do not invent contact information. Ask for their preferred email or phone first."};
- if(contact.phone&&!spoken.replace(/\D/g,"").includes(contact.phone.replace(/^\+1/,"").replace(/\D/g,"")))return {error:"Phone was not provided by the visitor."};
+ if(contact.email&&contact.email!==state.lead?.email&&!spoken.toLowerCase().includes(contact.email))return {error:"Do not invent contact information. Ask for their preferred email or phone first."};
+ if(contact.phone&&contact.phone!==state.lead?.phone&&!spoken.replace(/\D/g,"").includes(contact.phone.replace(/^\+1/,"").replace(/\D/g,"")))return {error:"Phone was not provided by the visitor."};
  if(input.kind==="SHOWING")return {error:"The five sample homes cannot be toured. Offer a call with Paul about comparable real homes instead."};
  if(input.kind==="CALL"&&!input.preferredTime)return {error:"Ask for one preferred day/time with timezone. This is a request, not a confirmed booking."};
  const turns=state.messages.filter(m=>m.role==="user").length;
@@ -47,12 +50,13 @@ export function notify(state:PaxState,reason:string){
  if(state.notifications.some(n=>n.reason===reason))return;
  const p=state.preferences;
  const summary=[`Pax ${reason}.`,state.lead?.name||"Website visitor",[state.lead?.phone,state.lead?.email].filter(Boolean).join(" / ")||"No contact yet",p.intent||"Exploring",p.area||"Palm Beach County",p.maxPrice?`budget $${p.maxPrice}`:"",p.beds?`${p.beds}+ beds`:"",p.timeline?`timeline: ${p.timeline}`:"",p.preApproved?"Pre-approved":"",`Source: ${state.source||"WEBSITE"}`,state.wanted||"",`Viewed: ${state.viewed.join(", ")||"none"}; saved: ${state.saved.join(", ")||"none"}`,state.appointments.at(-1)?.preferredTime||""].filter(Boolean).join(" · ").slice(0,900);
- for(const channel of ["email","sms"] as const)state.notifications.push({id:randomUUID(),reason,summary,status:"pending",attempts:0,nextAttemptAt:now(),channel,audience:"agent"});
+ for(const channel of (automaticSms()?["email","sms"]:["email"]) as ("email"|"sms")[])state.notifications.push({id:randomUUID(),reason,summary:summary+ (state.lead?`\nOpen lead: ${process.env.SITE_URL||"http://localhost:3000"}/admin/leads/${state.id}`:""),status:"pending",attempts:0,nextAttemptAt:now(),channel,audience:"agent"});
  event(state,"agent_notification_queued",reason);
 }
 export function confirmAction(state:PaxState,id:string,accepted:boolean){
  const action=state.actions.find(a=>a.id===id);if(!action)throw new Error("That request is not available in this conversation.");
  if(action.status!=="pending")return {status:action.status};
+ if(action.kind==="SEARCH")state.alertRequested=false;
  if(!accepted){action.status="declined";state.declinedAtTurn=state.messages.filter(m=>m.role==="user").length;event(state,"action_declined",action.kind);return {status:"declined",message:"No problem. You can keep browsing freely."};}
  action.status="confirmed";
  const hadLead=!!state.lead;
@@ -60,8 +64,8 @@ export function confirmAction(state:PaxState,id:string,accepted:boolean){
  else Object.assign(state.lead,action.contact);
  let message="Your contact information is saved for Paul to follow up about this request.";
  if(action.kind==="SEARCH"){
-  state.searches.push({id:action.id,preferences:action.preferences,status:"SAMPLE_ONLY",createdAt:now()});event(state,"saved_search_created");
-  message="Your search preferences are saved. This is sample data: automatic new-listing texts and emails are not running yet. Paul can follow up personally.";
+  saveConfirmedSearch(state,action.preferences,action.id);event(state,"saved_search_created");
+  message="Your search preferences are saved. We’ll check for new matching samples; email alerts require your email permission and a running alert service. These are fictional samples, not live MLS listings. Paul handles texts personally unless automatic texting is enabled.";
  }
  if(action.kind==="CALL"){
   state.appointments.push({id:action.id,kind:"CALL",preferredTime:action.preferredTime!,status:"REQUESTED",createdAt:now()});event(state,"appointment_requested","CALL");

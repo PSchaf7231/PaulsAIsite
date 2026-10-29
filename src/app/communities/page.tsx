@@ -1,4 +1,4 @@
 import CommunityCards from "@/components/community-cards";
 import { pageMetadata } from "@/lib/seo";
-export const metadata=pageMetadata("Palm Beach County communities","Explore Delray Beach, Boca Raton, Boynton Beach, Lake Worth, West Palm Beach, Jupiter, Wellington, and Palm Beach Gardens.","/communities");
+export const metadata=pageMetadata("Palm Beach County communities","Explore Delray Beach, Boca Raton, Boynton Beach, Lake Worth Beach, West Palm Beach, Jupiter, Wellington, and Palm Beach Gardens.","/communities");
 export default function Communities(){return <div className="container" style={{paddingBottom:80}}><div className="page-intro"><span className="eyebrow">FIND YOUR KIND OF FLORIDA</span><h1>A place for your everyday life.</h1><p>Start with the places that interest you. Then explore the homes, routines, and details that make a location feel right.</p></div><CommunityCards/><p className="notice">Images illustrate the browsing experience and are not photographs of specific communities.</p></div>}

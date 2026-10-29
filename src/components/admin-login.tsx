@@ -1,0 +1,7 @@
+'use client';
+import { useState } from 'react';
+export default function AdminLogin({configured}:{configured:boolean}){
+ const [busy,setBusy]=useState(false),[error,setError]=useState('');
+ return <section className="container section"><h1>Paul’s lead inbox</h1><p>Sign in to view private lead details and Pax’s suggested texts.</p>{!configured?<p>Administrator sign-in needs to be configured. Follow the manual-texting setup guide.</p>:<form className="lead-form" onSubmit={async e=>{e.preventDefault();setBusy(true);setError('');const data=new FormData(e.currentTarget);try{const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:data.get('email'),password:data.get('password')})});const body=await r.json();if(!r.ok)throw new Error(body.error);window.location.reload();}catch(e){setError(e instanceof Error?e.message:'Sign-in failed.');}finally{setBusy(false);}}}><label>Administrator email<input name="email" type="email" autoComplete="username" required/></label><label>Password<input name="password" type="password" autoComplete="current-password" required/></label><button className="btn" disabled={busy}>Sign in</button>{error&&<p role="alert">{error}</p>}</form>}</section>;
+}
+export function AdminLogout(){return <button className="btn outline small" onClick={async()=>{const r=await fetch('/api/admin/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(r.ok)window.location.reload();}}>Sign out</button>;}

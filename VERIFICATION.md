@@ -1,37 +1,33 @@
-# Phase 3 verification — October 29, 2026
+# Verification — saved searches, manual texting, SEO and in-page Pax
 
-## Story and evidence
+Verified October 29, 2026.
 
-A visitor browses samples → first-party activity endpoint → private visitor record → optional lead form/chat confirmation → same lead and activity history → independent Paul/visitor delivery queue. A signed Facebook event → durable receipt → server-side lead retrieval → the same lead/capture/delivery pipeline.
+## Automated checks
 
-- **28 Vitest unit/integration checks passed.** This includes existing listing/AI-tool/chat/security tests and new tests for interest thresholds, time tracking, dismissal cooldown, clearing search filters, contact validation, consent-gated acknowledgments, source tagging, duplicate capture, independent email/SMS retries, Facebook raw-body signatures, Page/form allowlists, durable receipt/retrieval, consent mapping, duplicate webhooks and retrieval failure recovery.
-- **30 distinct Playwright desktop/mobile checks passed after fixes**, including all Phase 1/2 regressions and the anonymous favorite → soft offer → lead form → stored activity/consent flow. Tests verify decline-and-browse, isolated visitors, sample cards/map, chat capture, requested callbacks, and Facebook challenge/signature/replay handling through real HTTP routes. Targeted reruns cover the fixed Facebook replay race and final listing/filter/favorite changes.
-- TypeScript checks and the **Next.js production build** passed. The build uses the existing generated Prisma client; Prisma schema/dependencies are unchanged. The earlier engine-download restriction remains relevant to running standard `prisma generate` in this environment. Standard Windows install/migration commands remain in README.
-- Browser tests use explicit local storage, deterministic chat replies and preview notification mode. HTTP Facebook tests use test-only secrets and leave retrieval pending without a Page token. Provider-fetch tests use mocked Facebook/Resend/Twilio responses. No test sends real email/SMS, calls live Meta, or makes a paid AI request.
+- **45 unit/integration tests** across six files passed. Coverage includes contact confirmation, visitor isolation, consent and notification modes, Facebook ingestion, saved criteria and partial updates, exact-versus-unverified matching, unsubscribe, Supabase administrator validation, six-at-a-time pagination, stable numbered references, comparison limits, filter removal, and SEO metadata/schema.
+- **46 desktop/mobile browser scenarios** passed across the full suite and a focused rerun after fixing a draft-editor hydration race. The complete run passed 45 scenarios and exposed the early-edit race in the remaining desktop scenario; both desktop/mobile saved-search/lead-page scenarios then passed after the fix. Text editing is now disabled until the editor and native-SMS link are ready.
+- Browser coverage includes in-page desktop/phone panels, preserved scroll and conversation/draft across navigation, current-home context, Escape/focus return, small talk without hidden searches, filter chips, numbered questions, map pins, comparison, Create alert confirmation, manual texts, protected lead pages, all eight neighborhood drafts, social PNG generation, redirects, sitemap/robots exclusions, and analytics consent/private-page exclusions.
+- TypeScript type checking passed.
+- Production Next.js build passed (Next.js 16.4.3).
+- Desktop and phone screenshots were inspected locally. The desktop chat/results columns and mobile results section were checked in addition to automated geometry assertions.
 
-## Issues found and fixed
+## What these checks use
 
-- An initial anonymous session no longer silently checks the chat consent box. Existing acknowledged chats still resume normally.
-- Browser activity is serialized and contact/chat submission waits for initial tracking, avoiding a first-visit cookie race.
-- Both channels are independently queued/checkpointed; database lease checkpoints renew during provider operations. One channel failure does not erase a successful delivery on the other.
-- Repeat Facebook events acknowledge an already committed receipt without contending with the retrieval worker. Concurrent first receipts still fail safely for retry if storage is busy.
-- Blank/malformed contact is rejected before storage. Search resets remove stale filter preferences. Favorites work on both listing cards and detail pages.
+Browser tests use explicit local development storage, deterministic AI replies, test-only administrator credentials, and notification preview mode. AI SDK integration tests execute actual tool loops with mock model responses. No paid OpenAI calls, real email/SMS sends, or live Meta submissions were made. Fake test credentials are restricted to non-production local mode. The five public sample records were not expanded; pagination uses separate unit-test inventory.
 
-## Not live-verified
+The sandbox cannot retrieve Unsplash/map tiles reliably. The local image fallback and tile-failure notice were exercised; listing markers and cards still work. This is not evidence of a production provider outage.
 
-Real Supabase transactions/permissions and real Meta, Twilio and Resend delivery require Paul's configured accounts. The OpenAI key is private local configuration and was not used for these tests. No live credentials are included in repository files. No new database migration is necessary: Phase 3 extends existing conversation JSON and projects source, contact and preferences into the existing lead table.
+The existing generated Prisma client was reused because Prisma binary downloads are restricted in this workspace. Schema and dependencies did not change. The production build was run directly through Next.js instead of re-running the blocked Prisma download step. Windows installation still uses `npm.cmd ci` and Prisma generation normally.
 
-External image/tile hosts remain restricted in this environment. Browser tests exercise local image fallbacks and map marker behavior; full tile delivery depends on the laptop's internet access.
+## Operational limits
 
-## Operating limits
+- Live Supabase database connectivity, live Supabase Auth sign-in, real Resend delivery, and Meta account permissions still require configured accounts. Provider/auth boundaries have mocked coverage; live delivery is not claimed.
+- Native SMS links and edited bodies were tested with desktop/mobile browser profiles. Sending from Paul’s actual iPhone/Android texting app still needs a device check. The app never marks a draft sent just because it opened the phone app. Twilio stays off unless deliberately enabled.
+- Email and Facebook recovery, and newly added sample matches, require the worker to keep running. Initial follow-up is queued after capture. Provider acknowledgment is not a delivered/read receipt.
+- Saved-search alerts use confirmed criteria and exact verified features only. Existing samples are baselined, so running the worker does not falsely announce all five as new. Unknown HOA/55+/private-pool details do not qualify as verified exact matches.
+- All current homes are fictional samples. Showings cannot be booked for them; calls remain requests until Paul confirms. There is no MLS, voice, or public deployment in this change.
+- Draft neighborhoods remain marked as drafts/noindex until Paul reviews them. Global indexing is off by default. Schema does not guarantee Google rich results or rankings.
+- Responsive image optimization, a smaller hero, deferred chat, and optional Web Vitals collection are implemented. Real Core Web Vitals must be measured on the deployed site using field data; local tests do not certify them.
+- Private `.env` values and stored visitor data are excluded from Git. No brokerage branding was added.
 
-- Default notification mode is off; use preview for no-send local testing and both for configured real delivery. Preview jobs are terminal test records, never automatically resent. The recovery worker must run alongside the server.
-- Immediate means the initial send is attempted after saving; provider setup, network outages and worker scheduling affect delivery. Sent means API acceptance, not final delivery/read receipt. Twilio can duplicate after an ambiguous timeout; Resend uses stable idempotency keys.
-- One acknowledgment per opted-in channel per website visitor/Facebook submission; no recurring marketing or new-listing alert scheduler. Twilio handles standard STOP for supported senders; no inbound conversation automation is added.
-- Activity time is approximate visible-tab time sampled every 30 seconds. A browser-tab session identifies a visit. Cookie identity does not deduplicate people across devices; separate Facebook leadgen IDs are separate submissions.
-- Five fictional samples only. No sample tours, automatic calendar bookings, MLS, voice, or deployment. Public photos and listings remain open.
-- Private inbox/insights stay local operator commands. Supabase RLS/role restrictions remain from Phase 2. Activity, form evidence and notification payloads contain private data; keep runtime files and command output private. Production abuse controls and retention policy remain launch preparation.
-
-## Repository hygiene
-
-`.env`, `.env.local`, private activity/conversation files, build output and test artifacts stay ignored. `.env.example` contains only placeholders, nonsecret IDs/defaults and Paul’s approved alert recipients. Local `.env` provider/Facebook placeholders were added without overwriting the OpenAI or database credentials. No real messages were sent during implementation.
+See `MANUAL-TEXTING-AND-SEARCHES.md` and `SEO-AND-GOOGLE-SETUP.md` for setup and plain-English acceptance steps.

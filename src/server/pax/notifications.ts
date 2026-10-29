@@ -1,15 +1,17 @@
+import { automaticSms } from "./delivery-settings";
 import type { Notification, PaxState } from "../../lib/pax";
 import { agent } from "../../lib/config";
 import { withSession } from "./store";
 export async function deliverNotification(n:Notification,fetcher:typeof fetch=fetch){
- const mode=process.env.PAX_NOTIFICATIONS||"off";
+ const mode=process.env.PAX_NOTIFICATIONS||"email";
+ const channel=n.channel||(mode==="sms"?"sms":"email");
+ if(channel==="sms"&&!automaticSms())return {status:"manual" as const};
  if(mode==="off")return {status:"unconfigured" as const};
  if(mode==="preview"){
   if(process.env.NODE_ENV==="production")return {status:"unconfigured" as const};
   return {status:"preview" as const};
  }
  let response:Response;
- const channel=n.channel||(mode==="sms"?"sms":"email");
  if(mode!=="both"&&mode!==channel)return {status:"unconfigured" as const};
  const to=n.audience==="lead"?n.to:channel==="email"?process.env.PAX_AGENT_EMAIL:process.env.PAX_AGENT_PHONE;
  if(!to)return {status:"unconfigured" as const};

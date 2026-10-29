@@ -1,16 +1,18 @@
 # Phase 3 — lead conversion setup
 
+**Updated workflow:** [Manual texting and conversational saved searches](MANUAL-TEXTING-AND-SEARCHES.md). Email alerts and manual texts are now the default. Twilio below is optional for later.
+
 ## What works now
 
 Visitors can browse every photo and property without registering. A random, first-party, HTTP-only cookie connects views, searches, favorites, visits and approximate visible-tab time to a visitor for 30 days. Three distinct property views, a favorite, or a return visit earns a dismissible Pax offer. “Not now” pauses those offers for 24 hours. There is also a permanent, optional “Ask Paul to follow up” form near the footer.
 
 A submitted form or confirmed chat contact attaches the prior activity to a lead. Name, phone/email, interests and timeline are stored; at least one contact channel is required. The website form collects a name and timeline; chat asks one question at a time and can accept contact before those are known. SMS and email acknowledgments require separately selected channel permission. Sharing a phone number alone is not permission for automatic texts.
 
-Each new lead queues **two alerts to Paul**, SMS to **+15612557285** and email to **exppbc@gmail.com**. Each opted-in contact channel queues one short Pax acknowledgment to the visitor. One provider failing does not prevent the other channel succeeding. The initial attempt runs immediately after saving; a worker recovers failed/interrupted attempts. Provider acceptance is recorded, not proof of final delivery or reading.
+Each new lead queues an **email alert to Paul at exppbc@gmail.com**, with a link to the protected lead page and its three manual text drafts. Opted-in leads can receive email acknowledgments. Automatic SMS to Paul/leads requires the optional Twilio setting. One provider failing does not prevent the other channel succeeding. The initial attempt runs immediately after saving; a worker recovers failed/interrupted attempts. Provider acceptance is recorded, not proof of final delivery or reading.
 
 Facebook Instant Forms use this same capture/delivery service and `PaxLead` table with source **FACEBOOK_FORM**; website source is **WEBSITE**. The signed webhook saves a durable receipt before acknowledging Meta, then retrieves answers using your Page token. Duplicate Meta deliveries cannot create another lead or acknowledgment for that leadgen ID. Facebook records include lead, Page, form, supplied answers/consent evidence, submitted time and ad ID when returned. Facebook activity is form context, not invented website visits.
 
-The five fictional listings remain. Saved searches store criteria only: automatic **new-listing alerts** need the later MLS/matching phase. Sample homes cannot be toured. Requests to discuss real showings go to Paul; appointments are not automatically booked. No recurring drip campaign, Vapi, MLS connection, CRM dashboard, or deployment is included.
+The five fictional listings remain. Confirmed conversational saved searches now check for new matching samples; real MLS alerts need the later MLS feed. Sample homes cannot be toured. Requests to discuss real showings go to Paul; appointments are not automatically booked. No recurring drip campaign, Vapi, MLS connection, CRM dashboard, or deployment is included.
 
 ## 1. Update the project on Windows
 
@@ -44,7 +46,7 @@ Preview messages are terminal test records and are **not resent** when you later
 
 ## 3. Accounts and keys for real texts and emails
 
-### Twilio: text Paul and opted-in leads
+### Optional later — Twilio: automatic texts
 
 Create a Twilio account at https://www.twilio.com/ and obtain:
 
@@ -66,6 +68,7 @@ Set locally:
 
 ```dotenv
 PAX_NOTIFICATIONS="both"
+PAX_SMS_MODE="twilio"
 PAX_AGENT_EMAIL="exppbc@gmail.com"
 PAX_AGENT_PHONE="+15612557285"
 TWILIO_ACCOUNT_SID="YOUR_ACCOUNT_SID"
@@ -122,7 +125,7 @@ POST requests require `X-Hub-Signature-256` computed from the **raw body** and A
 
 ## Data and operational boundaries
 
-- Private records stay in Supabase or the explicitly selected development file store. No public lead-listing endpoint or public operator dashboard is added.
+- Private records stay in Supabase or the explicitly selected development file store. The new `/admin/leads` pages require Paul’s Supabase Auth sign-in; visitor pages do not expose the inbox.
 - Lead IDs are stable per website visitor cookie or Facebook leadgen ID. Different devices, cleared cookies, or different Facebook submissions may create separate leads even with the same email; no speculative cross-source person merge occurs. A later CRM can merge reviewed duplicates.
 - Activity, outbox jobs and Facebook receipt state share the existing conversation transaction/lease. Private inbox output contains PII; never paste it into public issues.
 - No new dependency, database service, Docker installation, Facebook Pixel, or browser-side provider key is required.

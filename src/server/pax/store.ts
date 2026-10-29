@@ -58,7 +58,7 @@ export async function withSession<T>(id:string,fn:(state:PaxState,checkpoint:()=
     const lead=state.lead;
     await tx.paxLead.upsert({where:{conversationId:id},create:{id:lead.id,conversationId:id,name:lead.name,email:lead.email,phone:lead.phone,source:state.source||"WEBSITE",preferences:json({...state.preferences,wanted:state.wanted}),createdAt:new Date(lead.capturedAt)},update:{name:lead.name,email:lead.email,phone:lead.phone,source:state.source||"WEBSITE",preferences:json({...state.preferences,wanted:state.wanted})}});
     for(const a of state.appointments)await tx.paxAppointment.upsert({where:{id:a.id},create:{...a,leadId:lead.id,createdAt:new Date(a.createdAt),confirmedAt:a.confirmedAt?new Date(a.confirmedAt):null},update:{status:a.status,confirmedAt:a.confirmedAt?new Date(a.confirmedAt):null}});
-    for(const s of state.searches)await tx.paxSavedSearch.upsert({where:{id:s.id},create:{id:s.id,leadId:lead.id,preferences:json(s.preferences),status:s.status,createdAt:new Date(s.createdAt)},update:{}});
+    for(const s of state.searches)await tx.paxSavedSearch.upsert({where:{id:s.id},create:{id:s.id,leadId:lead.id,preferences:json(s.preferences),status:s.status,createdAt:new Date(s.createdAt)},update:{preferences:json(s.preferences),status:s.status}});
    }
   });
   return {value,state};

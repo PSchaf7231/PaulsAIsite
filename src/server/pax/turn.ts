@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { PaxState } from "../../lib/pax";
-import { event, now, flagHot, search } from "./state";
+import { event, now, flagHot } from "./state";
 import { RequestError } from "./security";
 export function prepareTurn(state:PaxState,turnId:string,text:string){
  const existing=state.messages.find(m=>m.id===turnId);
@@ -24,8 +24,6 @@ export function prepareTurn(state:PaxState,turnId:string,text:string){
  return true;
 }
 export function finishTurn(state:PaxState,turnId:string,text:string){
- // Ensure useful sample records are present by the second buying/browsing exchange, even if the model skipped search.
- const turns=state.messages.filter(m=>m.role==="user").length;
- if(turns<=2&&!state.events.some(e=>e.kind==="search")&&state.preferences.intent!=="SELLER")search(state,state.preferences);
+ // Search tools control when results appear; small talk and must-have questions must not trigger a hidden search.
  state.messages.push({id:randomUUID(),role:"assistant",text,at:now()});state.processedTurns.push(turnId);
 }

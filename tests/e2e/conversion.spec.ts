@@ -5,9 +5,9 @@ test('anonymous favorites trigger a soft ask, attach history, and preserve free 
  await page.getByRole('button',{name:'Save my preferences',exact:true}).click();
  await page.getByLabel('Your name', {exact:true}).fill('Sample Buyer');await page.getByLabel('Email',{exact:true}).fill('buyer@example.com');await page.getByLabel('Phone',{exact:true}).fill('2025550123');
  await page.getByLabel('What are you looking for?',{exact:true}).fill('Delray under $600k');await page.getByLabel('Your timeline',{exact:true}).fill('60 days');
- await page.getByRole('checkbox',{name:/Text me an automated/}).check();await page.getByRole('checkbox',{name:/Email me an automated/}).check();
+ await expect(page.getByRole('checkbox',{name:/Text me an automated/})).toHaveCount(0);await page.getByRole('checkbox',{name:/Email my acknowledgment/}).check();
  await page.getByRole('button',{name:'Send my request',exact:true}).click();await expect(page.getByLabel('Next steps with Pax').getByRole('status')).toContainText('Your request is saved');
- const state=(await (await page.request.get('/api/pax/session')).json()).session;expect(state.lead.email).toBe('buyer@example.com');expect(state.saved.length).toBe(1);expect(state.source).toBe('WEBSITE');expect(state.communicationConsent).toMatchObject({sms:true,email:true});
+ const state=(await (await page.request.get('/api/pax/session')).json()).session;expect(state.lead.email).toBe('buyer@example.com');expect(state.saved.length).toBe(1);expect(state.source).toBe('WEBSITE');expect(state.communicationConsent).toMatchObject({sms:false,email:true});
  await expect(page.getByTestId('listing-card')).toHaveCount(5);
 });
 test('not now pauses offers without capturing contact or blocking photos',async({page})=>{

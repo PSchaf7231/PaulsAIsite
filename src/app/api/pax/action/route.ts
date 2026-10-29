@@ -1,3 +1,6 @@
+import { removeCriterion,removableFields,moreResults,compareHome } from "@/server/pax/result-actions";
+import { searchSummary } from "@/lib/search-summary";
+import { propose } from "@/server/pax/state";
 import { queueFollowup } from "@/server/pax/conversion";
 import { after } from "next/server";
 import { z } from "zod";
@@ -9,6 +12,9 @@ import { flushNotifications } from "@/server/pax/notifications";
 import { randomUUID } from "node:crypto";
 const schema=z.discriminatedUnion("type",[
  z.object({type:z.literal("confirm"),actionId:z.string().uuid(),accepted:z.boolean(),smsConsent:z.boolean().default(false),emailConsent:z.boolean().default(false)}).strict(),
+ z.object({type:z.literal("remove_filter"),field:z.enum(removableFields),value:z.string().max(100).optional()}).strict(),
+ z.object({type:z.enum(["more","create_alert"])}).strict(),
+ z.object({type:z.enum(["compare","uncompare"]),slug:z.string().min(1).max(100)}).strict(),
  z.object({type:z.enum(["save","view"]),slug:z.string().min(1).max(100)}).strict()
 ]);
 export async function POST(req:Request){try{
@@ -17,6 +23,19 @@ export async function POST(req:Request){try{
  const id=await identity();if(!id)throw new RequestError("Start a chat before saving your preferences.",401);
  const result=await withSession(id,state=>{
   if(!state.messages.length)throw new RequestError("Start a chat first.",401);
+  if(state.events.length>1200)throw new RequestError("This conversation has reached its activity limit.",429);
+  if(data.type==="remove_filter"){
+   const result=removeCriterion(state,data.field,data.value);event(state,"filter_removed",JSON.stringify({field:data.field,value:data.value}));return result;
+  }
+  if(data.type==="more")return moreResults(state);
+  if(data.type==="compare"||data.type==="uncompare"){const result=compareHome(state,data.slug,data.type==="uncompare");if('error' in result)throw new RequestError(result.error!);event(state,"comparison_changed",data.type,data.slug);return result;}
+  if(data.type==="create_alert"){
+   state.alertRequested=true;
+   const result=state.lead?propose(state,{kind:"SEARCH",contact:state.lead}):null;
+   if(result&&'error' in result)throw new RequestError(result.error);
+   const text=`So, ${searchSummary(state.preferences)}. ${state.lead?'Is that right? Confirm the card to save this search.':'Is that right? What email should we use for new matching samples?'} These are sample alerts until live listings are connected.`;
+   state.messages.push({id:randomUUID(),role:"assistant",text,at:now()});return {status:state.lead?'confirmation_required':'contact_needed'};
+  }
   if(data.type==="confirm"){
    const previous=state.actions.find(a=>a.id===data.actionId);if(!previous)throw new RequestError("This action does not belong to your chat.",404);
    const wasPending=previous.status==="pending";
@@ -27,6 +46,7 @@ export async function POST(req:Request){try{
    return response;
   }
   if(state.events.length>1200)throw new RequestError("This conversation has reached its activity limit.",429);
+  if(data.type!=="save"&&data.type!=="view")throw new RequestError("Invalid action.");
   const alreadySaved=state.saved.includes(data.slug);
   const result=home(state,data.slug,data.type==="save");if("error" in result)throw new RequestError(result.error||"Unknown listing.",404);
   if(data.type==="save"){

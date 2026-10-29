@@ -1,0 +1,3 @@
+'use client';
+import { useState } from 'react';
+export default function Unsubscribe({id,token}:{id:string;token:string}){const [message,setMessage]=useState(''),[busy,setBusy]=useState(false);return <><button className="btn" disabled={busy} onClick={async()=>{setBusy(true);try{const r=await fetch('/api/pax/alerts/unsubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,token})});if(!r.ok)throw new Error('This link is unavailable. Please contact Paul to stop your alerts.');setMessage('Your saved-search alerts are stopped.');}catch(e){setMessage(e instanceof Error?e.message:'Please try again.');}finally{setBusy(false);}}}>Stop my alerts</button>{message&&<p role="status">{message}</p>}</>;}

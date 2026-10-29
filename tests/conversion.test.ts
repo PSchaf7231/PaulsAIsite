@@ -1,4 +1,4 @@
-import { describe,it,expect,vi,afterEach } from 'vitest';
+import { describe,beforeEach,it,expect,vi,afterEach } from 'vitest';
 import { createHmac,randomUUID } from 'node:crypto';
 import { mkdtemp,rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -8,6 +8,7 @@ import { newState,sampleListings } from '../src/server/pax/state';
 import { dispatchQueued,deliverNotification } from '../src/server/pax/notifications';
 import { facebookChanges,validSignature,receiveFacebook,processFacebook } from '../src/server/pax/facebook';
 import { readSession } from '../src/server/pax/store';
+beforeEach(()=>vi.stubEnv("PAX_SMS_MODE","twilio"));
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();});
 const input={name:'Test Visitor',email:'visitor@example.com',phone:'2025550123',wanted:'Delray under $600k',timeline:'60 days',smsConsent:true,emailConsent:true,purpose:'SEARCH' as const};
 describe('interest and conversion',()=>{

@@ -1,5 +1,6 @@
 export type ListingType = "SALE" | "RENT" | "COMMERCIAL";
 export type Listing = {
+ propertyType?:string; verifiedAmenities?:Record<string,boolean>;
  id: string; slug: string; title: string; address: string; city: string; postalCode: string;
  price: number; beds: number; baths: number; sqft: number; latitude: number; longitude: number;
  type: ListingType; status: string; description: string; features: string[]; source: string;

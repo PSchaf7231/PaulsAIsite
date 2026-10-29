@@ -1,4 +1,4 @@
-import { afterEach,describe,it,expect,vi } from "vitest";
+import { beforeEach,afterEach,describe,it,expect,vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import { mkdtemp,rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -13,6 +13,7 @@ import { createPaxAgent,streamPax } from "../src/server/pax/agent";
 import { MockLanguageModelV4 } from "ai/test";
 import { readBody } from "../src/server/pax/security";
 const id="a".repeat(64);
+beforeEach(()=>vi.stubEnv("PAX_SMS_MODE","twilio"));
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();});
 function contactState(){const s=newState(id);s.messages.push({id:randomUUID(),role:"user",text:"Please contact me at test@example.com",at:now()});return s;}
 describe("Pax conversion boundaries",()=>{
@@ -42,7 +43,7 @@ describe("Pax conversion boundaries",()=>{
   const s=contactState();s.preferences={area:"Delray Beach",timeline:"60 days",maxPrice:600000};
   const a=propose(s,{kind:"CALL",contact:{email:"test@example.com"},preferredTime:"Saturday 10 AM Eastern"});if("error" in a)throw Error(a.error);confirmAction(s,a.id,true);
   const b=propose(s,{kind:"SEARCH",contact:{email:"test@example.com"}});if("error" in b)throw Error(b.error);confirmAction(s,b.id,true);
-  expect(s.searches[0].status).toBe("SAMPLE_ONLY");expect(metrics([s])).toMatchObject({chats:1,leads:1,leadsWithAppointmentRequests:1,leadsWithConfirmedAppointments:0,leadsToAppointments:0});
+  expect(s.searches[0].status).toBe("ACTIVE_SAMPLE");expect(metrics([s])).toMatchObject({chats:1,leads:1,leadsWithAppointmentRequests:1,leadsWithConfirmedAppointments:0,leadsToAppointments:0});
   s.appointments[0].status="CONFIRMED";expect(metrics([s]).leadsToAppointments).toBe(1);
  });
  it("deduplicates retries and detects explicit hot signals without treating a negative as positive",()=>{

@@ -2,7 +2,9 @@
 
 For **Paul Schafranick** · 561-255-7285 · paul@palmbeachrealestatepros.com. Brokerage branding remains omitted. Local development only; nothing is deployed.
 
-**Start here for Phase 3:** [Windows setup, Twilio/Resend keys, Facebook hookup, and plain-English tests](PHASE3-SETUP.md).
+**Latest update:** [Manual texting, private lead pages, conversational saved searches and sample alerts](MANUAL-TEXTING-AND-SEARCHES.md). Twilio is off by default.
+
+**Original Phase 3 setup:** [Windows setup, Twilio/Resend keys, Facebook hookup, and plain-English tests](PHASE3-SETUP.md).
 
 Pax now provides streamed AI chat, sample listing search/cards/map, freely saved homes, preference and timeline tracking, confirmed contact capture, saved-search criteria, seller report requests, callback requests, and a durable Paul-notification queue. It uses only the **five fictional sample listings**. No MLS or Vapi integration is connected.
 
@@ -20,7 +22,8 @@ SITE_URL="http://localhost:3000"
 OPENAI_API_KEY="YOUR_OPENAI_API_KEY_HERE"
 OPENAI_MODEL="gpt-4o"
 PAX_STORAGE="database"
-PAX_NOTIFICATIONS="off"
+PAX_NOTIFICATIONS="email"
+PAX_SMS_MODE="manual"
 ```
 
 The OpenAI key is a server-side API key with API billing enabled, separate from a ChatGPT subscription. Never put it in `config/agent.json`, a `NEXT_PUBLIC_` variable, or GitHub. `OPENAI_MODEL` can be changed to another tool-capable model available to your OpenAI account. The configured default follows the original gpt-4o brief; model availability must be verified with your account. Do not add your future MLS key yet.
@@ -46,7 +49,7 @@ Prisma 7 uses `prisma.config.ts` for its migration URL and a PostgreSQL driver a
 
 ## Instant Paul alerts and lead acknowledgments
 
-See [PHASE3-SETUP.md](PHASE3-SETUP.md) for exact provider account/key instructions and Facebook setup. Set `PAX_NOTIFICATIONS="both"` after configuring Resend and Twilio. Paul’s alerts go to **exppbc@gmail.com** and **+15612557285**. Lead acknowledgments use separately opted-in channels; no recurring campaign or listing-alert scheduler runs yet. Keep `npm.cmd run pax:worker` running for recovery/retry. Use `preview` for local tests with no real sending.
+See [PHASE3-SETUP.md](PHASE3-SETUP.md) for exact provider account/key instructions and Facebook setup. Use `PAX_NOTIFICATIONS="email"` and `PAX_SMS_MODE="manual"` after configuring Resend. Twilio is optional later. Paul’s alerts go by email to **exppbc@gmail.com** with a private lead-page link. Three suggested texts open your phone’s texting app. Lead acknowledgments use separately opted-in channels; no recurring drip campaign runs. The worker checks confirmed searches for new matching samples. Keep `npm.cmd run pax:worker` running for recovery/retry. Use `preview` for local tests with no real sending.
 
 ## What to test
 
@@ -58,14 +61,14 @@ See [PHASE3-SETUP.md](PHASE3-SETUP.md) for exact provider account/key instructio
 6. Say **“We need to sell first.”** Expect an offer for Paul’s free home value report and one next question. Pax must not invent a valuation.
 7. Say **“I’m pre-approved and moving within 60 days.”** Check the recorded hot signal and, after configuring a notification provider, verify Paul receives a short alert. With notifications off, inbox status must say unconfigured, not sent.
 8. Ask for a showing. Pax must explain samples cannot be toured and offer a call about comparable real homes. Supply a preferred call day/time/timezone and contact, then confirm. Status should be **REQUESTED**, never silently booked.
-9. Ask to save search preferences. Confirm the card. It must state automated alerts are not running yet.
+9. Ask to save search preferences. Confirm the card. It must read back all criteria before confirmation and explain that matching alerts currently use fictional samples.
 10. Open an incognito/private browser: the prior visitor’s messages/contact must not appear.
 11. On a phone-width screen, check the input, confirmation cards, map, and save buttons. No account is required to browse.
 12. Remove the OpenAI key temporarily and restart. Pax should show a useful unavailable state with browsing/contact links, not simulated AI replies. Restore the key afterward.
 
 ## Inbox, actual confirmations, and conversion reporting
 
-Until the Phase 4 visual CRM exists, use these **local operator commands**. They are not exposed as public web endpoints:
+Use `/admin/leads` for the private lead inbox and manual text drafts (Supabase Auth setup in the latest guide). These **local operator commands** also remain available:
 
 ```powershell
 npm.cmd run pax:inbox
@@ -114,3 +117,7 @@ For a local preview without Supabase, explicitly set `PAX_STORAGE="local"` while
 ## Remaining phases
 
 Facebook Instant Forms ingestion, broader anonymous conversion triggers, visitor thank-you delivery and CRM integration continue in Phase 3. The CRM interface remains Phase 4; scheduled alerts, email templates, drips and reminders remain Phase 5. Vapi and MLS access remain later work. See `PLAN.md` and `VERIFICATION.md` for exact scope and test limits.
+
+## SEO and in-page Pax
+
+See [SEO and Google setup](SEO-AND-GOOGLE-SETUP.md) for draft neighborhood reviews, Search Console, optional Analytics and the persistent desktop/mobile chat panel. Indexing stays off by default while the site contains sample data and unreviewed copy.

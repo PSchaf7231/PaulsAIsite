@@ -1,3 +1,4 @@
+import { automaticSms } from './delivery-settings';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { PaxState, Contact } from '../../lib/pax';
@@ -7,6 +8,7 @@ export type CaptureInput=z.infer<typeof captureSchema>;
 export function queueFollowup(state:PaxState){
  if(!state.lead)return;
  for(const channel of ['email','sms'] as const){
+  if(channel==='sms'&&!automaticSms())continue;
   const to=channel==='email'?state.lead.email:state.lead.phone;
   if(!to||!state.communicationConsent?.[channel]||state.notifications.some(n=>n.audience==='lead'&&n.channel===channel))continue;
   const summary=`Hi${state.lead.name?` ${state.lead.name}`:''}, this is Pax, Paul Schafranick’s AI assistant. Thanks for reaching out about ${state.wanted||state.preferences.area||'Palm Beach County homes'}. Paul has your request and will follow up personally. You can reach Paul at 561-255-7285. Our website currently displays fictional sample homes; no showing or listing alert is confirmed.${channel==='sms'?' Reply STOP to opt out.':''}`;

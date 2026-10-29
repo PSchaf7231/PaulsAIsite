@@ -4,15 +4,15 @@ async function say(page:Page,text:string){await page.getByLabel('Message Pax',{e
 async function session(page:Page){return (await (await page.request.get('/api/pax/session')).json()).session;}
 test('Pax searches samples, syncs map, saves freely, and resumes after reload',async({page})=>{
  await begin(page);await say(page,'Find a home in Delray under 600k');
- await expect(page.getByTestId('listing-card')).toHaveCount(1);await expect(page.locator('.leaflet-marker-icon')).toHaveCount(1);
- await page.getByRole('button',{name:'Save this home',exact:true}).click();await expect(page.getByRole('button',{name:'Saved',exact:true})).toBeDisabled();
+ await expect(page.getByRole('dialog').getByTestId('listing-card')).toHaveCount(1);await expect(page.locator('.leaflet-marker-icon')).toHaveCount(1);
+ await page.getByRole('dialog').getByRole('button',{name:'Save this home',exact:true}).click();await expect(page.getByRole('dialog').getByRole('button',{name:'Saved',exact:true})).toBeDisabled();
  expect((await session(page)).lead).toBeUndefined();
- await page.reload();await expect(page.getByRole('button',{name:'Saved',exact:true})).toBeVisible();
- await page.getByTestId('listing-card').click();await expect(page.getByRole('heading',{name:'Courtyard days, coastal evenings'})).toBeVisible();
+ await page.reload();await expect(page.getByRole('dialog').getByRole('button',{name:'Saved',exact:true})).toBeVisible();
+ await page.getByRole('dialog').getByTestId('listing-card').click();await expect(page.getByRole('heading',{name:'Courtyard days, coastal evenings'})).toBeVisible();
  await expect.poll(async()=> (await session(page)).viewed).toContain('delray-courtyard');
 });
 test('contact confirmation captures one lead and attaches previous interest',async({page})=>{
- await begin(page);await say(page,'Find a home in Delray under 600k');await page.getByRole('button',{name:'Save this home',exact:true}).click();await expect(page.getByRole('button',{name:'Saved',exact:true})).toBeVisible();
+ await begin(page);await say(page,'Find a home in Delray under 600k');await page.getByRole('dialog').getByRole('button',{name:'Save this home',exact:true}).click();await expect(page.getByRole('dialog').getByRole('button',{name:'Saved',exact:true})).toBeVisible();
  await say(page,'Please contact me at test@example.com');await expect(page.getByRole('button',{name:'Confirm',exact:true})).toBeVisible();
  expect((await session(page)).lead).toBeUndefined();const action=(await session(page)).actions[0];
  await page.getByRole('button',{name:'Confirm',exact:true}).click();await expect(page.getByText('Your contact information is saved for Paul to follow up about this request.')).toBeVisible();
@@ -23,7 +23,7 @@ test('contact confirmation captures one lead and attaches previous interest',asy
 test('saved search is stored honestly without claiming live alerts',async({page})=>{
  await begin(page);await say(page,'Find a home in Delray under 600k');await say(page,'Save my search and use test@example.com');
  await page.getByRole('button',{name:'Confirm',exact:true}).click();await expect(page.getByText(/Your search preferences are saved/)).toBeVisible();
- expect((await session(page)).searches[0].status).toBe('SAMPLE_ONLY');
+ expect((await session(page)).searches[0].status).toBe('ACTIVE_SAMPLE');
 });
 test('a callback is a request, not a booked appointment',async({page})=>{
  await begin(page);await say(page,'Please call me Saturday at 10 AM Eastern, test@example.com');
@@ -33,7 +33,7 @@ test('a callback is a request, not a booked appointment',async({page})=>{
 test('declining contact preserves free browsing and creates no lead',async({page})=>{
  await begin(page);await say(page,'Please contact me at test@example.com');await page.getByRole('button',{name:'Not now',exact:true}).click();
  await expect(page.getByText('No problem. You can keep browsing freely.')).toBeVisible();await say(page,'Find a home in Delray');
- await expect(page.getByTestId('listing-card')).toHaveCount(1);expect((await session(page)).lead).toBeUndefined();
+ await expect(page.getByRole('dialog').getByTestId('listing-card')).toHaveCount(1);expect((await session(page)).lead).toBeUndefined();
 });
 test('seller and hot-lead signals are recorded; samples cannot be toured',async({page})=>{
  await begin(page);await say(page,'We need to sell first');await expect(page.getByText(/Paul can help with a free home value report/)).toBeVisible();expect((await session(page)).preferences.intent).toBe('SELLER');
@@ -55,5 +55,5 @@ test('a slow session lookup does not clear the visitor’s chat consent',async({
  await page.goto('/pax');await requested;await page.getByRole('checkbox').check();release();
  await expect(page.getByText('Automated test mode · no live AI or delivery')).toBeVisible();
  await expect(page.getByRole('checkbox')).toBeChecked();
- await say(page,'Find a home in Delray under 600k');await expect(page.getByTestId('listing-card')).toHaveCount(1);
+ await say(page,'Find a home in Delray under 600k');await expect(page.getByRole('dialog').getByTestId('listing-card')).toHaveCount(1);
 });

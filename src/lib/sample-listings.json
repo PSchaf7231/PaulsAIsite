@@ -1,0 +1,187 @@
+[
+  {
+    "id": "sample-1",
+    "slug": "delray-courtyard",
+    "title": "Courtyard days, coastal evenings",
+    "address": "100 Sample Palm Lane",
+    "city": "Delray Beach",
+    "postalCode": "33444",
+    "price": 585000,
+    "beds": 3,
+    "baths": 2,
+    "sqft": 1840,
+    "latitude": 26.4615,
+    "longitude": -80.0728,
+    "type": "SALE",
+    "status": "ACTIVE",
+    "description": "This fictional Delray Beach listing demonstrates the browsing experience. Imagine bright living spaces, a practical layout, and room to make the space your own. The address, price, features, and map position are illustrative only. It is not an available property.",
+    "features": [
+      "Private courtyard",
+      "Single-level layout",
+      "Covered patio"
+    ],
+    "source": "SAMPLE",
+    "attribution": "Illustrative stock photography via Unsplash. If unavailable, a locally stored AI-generated home illustration is shown. Neither depicts this fictional property.",
+    "isSample": true,
+    "photos": [
+      {
+        "url": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=85",
+        "alt": "Illustrative home photograph; not the listed property",
+        "position": 0
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=85",
+        "alt": "Illustrative living space; not the listed property",
+        "position": 1
+      }
+    ]
+  },
+  {
+    "id": "sample-2",
+    "slug": "boca-garden-home",
+    "title": "A little more room to unwind",
+    "address": "200 Sample Garden Way",
+    "city": "Boca Raton",
+    "postalCode": "33432",
+    "price": 925000,
+    "beds": 4,
+    "baths": 3,
+    "sqft": 2680,
+    "latitude": 26.3683,
+    "longitude": -80.1289,
+    "type": "SALE",
+    "status": "ACTIVE",
+    "description": "This fictional Boca Raton listing demonstrates the browsing experience. Imagine bright living spaces, a practical layout, and room to make the space your own. The address, price, features, and map position are illustrative only. It is not an available property.",
+    "features": [
+      "Open kitchen",
+      "Garden outlook",
+      "Two-car garage"
+    ],
+    "source": "SAMPLE",
+    "attribution": "Illustrative stock photography via Unsplash. If unavailable, a locally stored AI-generated home illustration is shown. Neither depicts this fictional property.",
+    "isSample": true,
+    "photos": [
+      {
+        "url": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=85",
+        "alt": "Illustrative home photograph; not the listed property",
+        "position": 0
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=85",
+        "alt": "Illustrative living space; not the listed property",
+        "position": 1
+      }
+    ]
+  },
+  {
+    "id": "sample-3",
+    "slug": "boynton-poolside",
+    "title": "Your own poolside retreat",
+    "address": "300 Sample Coastal Court",
+    "city": "Boynton Beach",
+    "postalCode": "33435",
+    "price": 495000,
+    "beds": 3,
+    "baths": 2,
+    "sqft": 1690,
+    "latitude": 26.5318,
+    "longitude": -80.0905,
+    "type": "SALE",
+    "status": "ACTIVE",
+    "description": "This fictional Boynton Beach listing demonstrates the browsing experience. Imagine bright living spaces, a practical layout, and room to make the space your own. The address, price, features, and map position are illustrative only. It is not an available property.",
+    "features": [
+      "Private pool",
+      "Screened patio",
+      "Split floor plan"
+    ],
+    "source": "SAMPLE",
+    "attribution": "Illustrative stock photography via Unsplash. If unavailable, a locally stored AI-generated home illustration is shown. Neither depicts this fictional property.",
+    "isSample": true,
+    "photos": [
+      {
+        "url": "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=85",
+        "alt": "Illustrative home photograph; not the listed property",
+        "position": 0
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=85",
+        "alt": "Illustrative living space; not the listed property",
+        "position": 1
+      }
+    ]
+  },
+  {
+    "id": "sample-4",
+    "slug": "jupiter-terrace",
+    "title": "A fresh start near the coast",
+    "address": "400 Sample Terrace Drive",
+    "city": "Jupiter",
+    "postalCode": "33458",
+    "price": 3400,
+    "beds": 2,
+    "baths": 2,
+    "sqft": 1380,
+    "latitude": 26.9342,
+    "longitude": -80.1111,
+    "type": "RENT",
+    "status": "ACTIVE",
+    "description": "This fictional Jupiter listing demonstrates the browsing experience. Imagine bright living spaces, a practical layout, and room to make the space your own. The address, price, features, and map position are illustrative only. It is not an available property.",
+    "features": [
+      "Private terrace",
+      "Laundry room",
+      "Annual lease example"
+    ],
+    "source": "SAMPLE",
+    "attribution": "Illustrative stock photography via Unsplash. If unavailable, a locally stored AI-generated home illustration is shown. Neither depicts this fictional property.",
+    "isSample": true,
+    "photos": [
+      {
+        "url": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=85",
+        "alt": "Illustrative home photograph; not the listed property",
+        "position": 0
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=85",
+        "alt": "Illustrative living space; not the listed property",
+        "position": 1
+      }
+    ]
+  },
+  {
+    "id": "sample-5",
+    "slug": "west-palm-studio",
+    "title": "Space for your next chapter",
+    "address": "500 Sample Commerce Avenue",
+    "city": "West Palm Beach",
+    "postalCode": "33401",
+    "price": 725000,
+    "beds": 0,
+    "baths": 1,
+    "sqft": 2100,
+    "latitude": 26.7153,
+    "longitude": -80.0642,
+    "type": "COMMERCIAL",
+    "status": "ACTIVE",
+    "description": "This fictional West Palm Beach listing demonstrates the browsing experience. Imagine bright living spaces, a practical layout, and room to make the space your own. The address, price, features, and map position are illustrative only. It is not an available property.",
+    "features": [
+      "Flexible floor plan",
+      "Street-level entry",
+      "Office or studio example"
+    ],
+    "source": "SAMPLE",
+    "attribution": "Illustrative stock photography via Unsplash. If unavailable, a locally stored AI-generated home illustration is shown. Neither depicts this fictional property.",
+    "isSample": true,
+    "photos": [
+      {
+        "url": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=85",
+        "alt": "Illustrative office interior; not the listed property",
+        "position": 0
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=85",
+        "alt": "Illustrative living space; not the listed property",
+        "position": 1
+      }
+    ]
+  }
+]

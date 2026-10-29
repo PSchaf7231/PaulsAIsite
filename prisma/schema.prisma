@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ListingType {
+  SALE
+  RENT
+  COMMERCIAL
+}
+
+model Listing {
+  id String @id @default(cuid())
+  slug String @unique
+  title String
+  address String
+  city String
+  postalCode String
+  price Int
+  beds Int
+  baths Float
+  sqft Int
+  latitude Float
+  longitude Float
+  type ListingType @default(SALE)
+  status String @default("ACTIVE")
+  description String
+  features String[]
+  source String @default("AGENT")
+  attribution String?
+  isSample Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  photos ListingPhoto[]
+
+  @@index([status, type, city, price])
+}
+
+model ListingPhoto {
+  id String @id @default(cuid())
+  listingId String
+  url String
+  alt String
+  position Int @default(0)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, position])
+}

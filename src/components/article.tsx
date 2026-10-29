@@ -1,0 +1,3 @@
+import Link from "next/link";
+type ArticleData={title:string;category:string;excerpt:string;sections:string[][]};
+export default function Article({article}:{article:ArticleData}){return <article className="article"><span className="eyebrow">{article.category}</span><h1>{article.title}</h1><p>{article.excerpt}</p>{article.sections.map(([title,body])=><section key={title}><h2>{title}</h2><p>{body}</p></section>)}<div className="callout">General educational information, not legal, tax, insurance, or financial advice. Verify property-specific details with qualified professionals.</div><Link className="btn" href="/contact">Talk through your next step ↗</Link></article>}

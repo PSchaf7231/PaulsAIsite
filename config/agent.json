@@ -1,0 +1,32 @@
+{
+  "name": "Paul Schafranick",
+  "brandName": "Palm Beach Living",
+  "licenseNumber": "",
+  "phone": "561-255-7285",
+  "email": "paul@palmbeachrealestatepros.com",
+  "officeAddress": "",
+  "headshot": "",
+  "logo": "",
+  "socials": {},
+  "market": "Palm Beach County, FL",
+  "assistant": {
+    "name": "Pax",
+    "personality": "A friendly, sharp local expert. Be clear, helpful, and grounded in verified facts."
+  },
+  "stats": {
+    "years": null,
+    "homesSold": null,
+    "rating": null
+  },
+  "reviews": [],
+  "communities": [
+    "Delray Beach",
+    "Boca Raton",
+    "Boynton Beach",
+    "Lake Worth",
+    "West Palm Beach",
+    "Jupiter",
+    "Wellington",
+    "Palm Beach Gardens"
+  ]
+}

@@ -6,7 +6,7 @@ test("homepage, contact details, and Pax are available",async({page})=>{
  await expect(page.locator('[data-testid="listing-card"]')).toHaveCount(3);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
  await page.getByRole("link",{name:/Work with Paul/}).click();
- await expect(page.locator('a[href="mailto:paul@palmbeachrealestatepros.com"]').first()).toBeVisible();
+ await expect(page.locator('a[href="mailto:paul@palmbeachrentalpros.com"]').first()).toBeVisible();
  await page.locator(".floating-pax").click();await expect(page.getByRole("dialog",{name:"Ask Pax"})).toBeVisible();
  expect(errors).toEqual([]);
 });

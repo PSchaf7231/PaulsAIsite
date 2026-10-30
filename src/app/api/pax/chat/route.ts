@@ -1,4 +1,6 @@
-import samples from "@/lib/sample-listings.json";
+import { setFeedMode } from "@/lib/pax-inventory";
+import { hydrateListing } from "@/server/pax/inventory";
+import { sparkConfigured } from "@/server/listings/spark";
 import { communities } from "@/lib/communities";
 import { after } from "next/server";
 import { z } from "zod";
@@ -10,9 +12,9 @@ import { publicPaxState } from "@/lib/pax";
 import { flushNotifications,dispatchQueued } from "@/server/pax/notifications";
 export const runtime="nodejs";
 export async function POST(req:Request){try{
- const input=z.object({text:z.string().trim().min(1).max(2000),turnId:z.string().uuid(),consent:z.literal(true),listingSlug:z.string().max(100).optional(),area:z.string().max(100).optional()}).strict().safeParse(await readBody(req));
+ const input=z.object({text:z.string().trim().min(1).max(2000),turnId:z.string().uuid(),consent:z.literal(true),listingSlug:z.string().max(240).optional(),area:z.string().max(100).optional()}).strict().safeParse(await readBody(req));
  if(!input.success)throw new RequestError("Send a short message and acknowledge the chat privacy notice.");
- if(!process.env.OPENAI_API_KEY&&process.env.PAX_TEST_MODE!=="1")return Response.json({error:"Pax is not connected to OpenAI yet. You can browse the five samples or contact Paul directly."},{status:503});
+ if(!process.env.OPENAI_API_KEY&&process.env.PAX_TEST_MODE!=="1")return Response.json({error:"Pax is not connected to OpenAI yet. You can browse listings or contact Paul directly."},{status:503});
  if(process.env.PAX_TEST_MODE==="1"&&(process.env.NODE_ENV==="production"||process.env.PAX_STORAGE!=="local"))throw new RequestError("Test mode is not available here.",503);
  const id=(await identity(true))!;const encoder=new TextEncoder();
  const stream=new ReadableStream({async start(controller){
@@ -21,7 +23,9 @@ export async function POST(req:Request){try{
   try{
    const {state}=await withSession(id,async (state,checkpoint)=>{
     if(!prepareTurn(state,input.data.turnId,input.data.text))return;
-    state.currentPage={listingSlug:samples.find(l=>l.slug===input.data.listingSlug)?.slug,area:communities.find(c=>c.name===input.data.area)?.name};
+    setFeedMode(state,sparkConfigured()?"live":"sample");
+    const listing=input.data.listingSlug?await hydrateListing(state,input.data.listingSlug):null;
+    state.currentPage={listingSlug:listing?.slug,area:communities.find(c=>c.name===input.data.area)?.name};
     await checkpoint();
     await dispatchQueued(state,checkpoint);
     await checkpoint();

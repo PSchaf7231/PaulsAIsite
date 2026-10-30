@@ -47,4 +47,4 @@ On desktop, the in-page panel has chat on the left and cards/map on the right. O
 - **Create alert** reads the criteria back, asks for contact if needed, and asks for confirmation. Email delivery also requires email permission and the configured worker.
 - Results load six at a time; **Show me more** appears only when another matching batch exists. There are still just five public sample listings, so the current dataset cannot fill a second page. Automated tests verify paging with separate test-only data.
 - Pax handles small talk warmly and asks one natural must-have question before a broad search. If you already gave must-haves or say “just show me,” it searches without making you repeat yourself.
-- Voice is still a later phase. Numbered-result tools are reusable by the future voice connection; no microphone or Vapi service was added.
+- Full Vapi voice conversations remain a later phase. Optional browser voice typing is now available; see `LISTING-DETAIL-SETUP.md`. Numbered-result tools are shared by typed and dictated messages.

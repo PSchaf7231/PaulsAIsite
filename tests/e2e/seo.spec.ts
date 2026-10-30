@@ -10,7 +10,7 @@ test('listing SEO, share image, sitemap and robots avoid fictional offers and pr
  await page.goto('/listings/boynton-poolside');await expect(page).toHaveTitle(/Boynton Beach home for sale with pool/);await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href','http://localhost:3000/listings/boynton-poolside');
  const image=await page.locator('meta[property="og:image"]').getAttribute('content');const response=await request.get(image!);expect(response.status()).toBe(200);expect(response.headers()['content-type']).toContain('image/png');expect((await response.body()).subarray(0,8).toString('hex')).toBe('89504e470d0a1a0a');
  const robots=await (await request.get('/robots.txt')).text();expect(robots).toContain('Disallow: /admin/');expect(robots).toContain('Allow: /');
- const sitemap=await (await request.get('/sitemap.xml')).text();expect(sitemap).toContain('/communities</loc>');expect(sitemap).not.toContain('boynton-poolside');expect(sitemap).not.toContain('/admin/');expect(sitemap).not.toContain('/communities/delray-beach');
+ const sitemapResponse=await request.get('/sitemap.xml');expect(sitemapResponse.status()).toBe(200);const sitemap=await sitemapResponse.text();expect(sitemap).toContain('/communities</loc>');expect(sitemap).not.toContain('boynton-poolside');expect(sitemap).not.toContain('/admin/');expect(sitemap).not.toContain('/communities/delray-beach');
  await expect(page.locator('meta[name="google-site-verification"]')).toHaveAttribute('content','test-verification-code');
 });
 test('analytics needs consent, excludes private pages and does not send query parameters',async({page})=>{

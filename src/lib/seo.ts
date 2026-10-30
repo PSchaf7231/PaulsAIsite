@@ -11,7 +11,7 @@ export function listingMetadata(l:Listing){
  const pool=l.features.some(f=>/pool/i.test(f));
  const kind=l.type==='COMMERCIAL'?'Commercial property':l.type==='RENT'?'Home for rent':'Home for sale';
  const title=`${l.city} ${kind.toLowerCase()}${pool?' with pool':''} — ${l.address}${l.isSample?' (sample)':''}`;
- const description=`${l.isSample?'Fictional sample: ':''}${l.beds?`${l.beds} beds, `:''}${l.baths} baths in ${l.city} at $${l.price.toLocaleString('en-US')}${l.type==='RENT'?' per month':''}. ${l.features.slice(0,2).join(', ')}. Discuss your search with Paul Schafranick.`;
+ const description=`${l.isSample?'Fictional sample: ':''}${l.beds?`${l.beds} beds, `:''}${l.missingFields?.includes('baths')?'Bath count not supplied':`${l.baths} baths`} in ${l.city} at $${l.price.toLocaleString('en-US')}${l.type==='RENT'?' per month':''}. ${l.features.slice(0,2).join(', ')}. Discuss your search with Paul Schafranick.`;
  return pageMetadata(title,description,`/listings/${l.slug}`,{noindex:l.isSample});
 }
 export function agentSchema(){return {'@context':'https://schema.org','@type':'RealEstateAgent','@id':absoluteUrl('/#agent'),name:agent.name,url:absoluteUrl('/'),telephone:'+15612557285',email:agent.email,areaServed:agent.communities.map(name=>({'@type':'City',name})),...(agent.headshot?{image:agent.headshot}:{}),...(agent.licenseNumber?{identifier:agent.licenseNumber}:{}),sameAs:Object.values(agent.socials)};}

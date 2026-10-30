@@ -1,3 +1,5 @@
+import { siteUrl } from "../../lib/config";
+import { sessionListings } from "../../lib/pax-inventory";
 import { saveConfirmedSearch } from "./search-criteria";
 import { automaticSms } from "./delivery-settings";
 import { randomUUID } from "node:crypto";
@@ -13,10 +15,10 @@ export function search(state:PaxState,filters:Preference){
  return {sampleOnly:true,count:results.length,listings:results,message:results.length?"Fictional samples, not live or tourable inventory.":"No matching samples. Do not invent alternatives; offer to change one filter or ask Paul about real inventory."};
 }
 export function home(state:PaxState,slug:string,save=false){
- const listing=sampleListings.find(l=>l.slug===slug);if(!listing)return {error:"Unknown listing. Use search_listings."};
+ const listing=sessionListings(state).find(l=>l.slug===slug);if(!listing)return {error:"Unknown listing. Use search_listings."};
  const list=save?state.saved:state.viewed;if(!list.includes(slug))list.push(slug);
  event(state,save?"home_saved":"home_viewed",undefined,slug);
- return {listing,sampleOnly:true,saved:save};
+ return {listing,sampleOnly:listing.isSample,saved:save};
 }
 export function updatePreferences(state:PaxState,preferences:Preference){
  if(Object.entries(preferences).some(([k,v])=>v!==undefined&&JSON.stringify(v)!==JSON.stringify((state.preferences as Record<string,unknown>)[k])))for(const a of state.actions)if(a.kind==="SEARCH"&&a.status==="pending")a.status="declined";
@@ -37,8 +39,8 @@ export function propose(state:PaxState,input:{kind:ActionKind;contact:Contact;pr
  // A model may only propose contact information actually supplied in this conversation.
  if(contact.email&&contact.email!==state.lead?.email&&!spoken.toLowerCase().includes(contact.email))return {error:"Do not invent contact information. Ask for their preferred email or phone first."};
  if(contact.phone&&contact.phone!==state.lead?.phone&&!spoken.replace(/\D/g,"").includes(contact.phone.replace(/^\+1/,"").replace(/\D/g,"")))return {error:"Phone was not provided by the visitor."};
- if(input.kind==="SHOWING")return {error:"The five sample homes cannot be toured. Offer a call with Paul about comparable real homes instead."};
- if(input.kind==="CALL"&&!input.preferredTime)return {error:"Ask for one preferred day/time with timezone. This is a request, not a confirmed booking."};
+ if(input.kind==="SHOWING"&&(!input.listingSlug||sessionListings(state).find(l=>l.slug===input.listingSlug)?.isSample!==false))return {error:"The five sample homes cannot be toured. Offer a call with Paul about comparable real homes instead."};
+ if((input.kind==="CALL"||input.kind==="SHOWING")&&!input.preferredTime)return {error:"Ask for one preferred day/time with timezone. This is a request, not a confirmed booking."};
  const turns=state.messages.filter(m=>m.role==="user").length;
  if(turns-state.declinedAtTurn<3)return {error:"They recently declined. Keep helping without another contact request yet."};
  const existing=state.actions.find(a=>a.status==="pending"&&a.kind===input.kind);
@@ -49,8 +51,8 @@ export function propose(state:PaxState,input:{kind:ActionKind;contact:Contact;pr
 export function notify(state:PaxState,reason:string){
  if(state.notifications.some(n=>n.reason===reason))return;
  const p=state.preferences;
- const summary=[`Pax ${reason}.`,state.lead?.name||"Website visitor",[state.lead?.phone,state.lead?.email].filter(Boolean).join(" / ")||"No contact yet",p.intent||"Exploring",p.area||"Palm Beach County",p.maxPrice?`budget $${p.maxPrice}`:"",p.beds?`${p.beds}+ beds`:"",p.timeline?`timeline: ${p.timeline}`:"",p.preApproved?"Pre-approved":"",`Source: ${state.source||"WEBSITE"}`,state.wanted||"",`Viewed: ${state.viewed.join(", ")||"none"}; saved: ${state.saved.join(", ")||"none"}`,state.appointments.at(-1)?.preferredTime||""].filter(Boolean).join(" · ").slice(0,900);
- for(const channel of (automaticSms()?["email","sms"]:["email"]) as ("email"|"sms")[])state.notifications.push({id:randomUUID(),reason,summary:summary+ (state.lead?`\nOpen lead: ${process.env.SITE_URL||"http://localhost:3000"}/admin/leads/${state.id}`:""),status:"pending",attempts:0,nextAttemptAt:now(),channel,audience:"agent"});
+ const summary=[`${state.preferences.intent==="SELLER"?"SELLER · ":""}Pax ${reason}.`,state.lead?.name||"Website visitor",[state.lead?.phone,state.lead?.email].filter(Boolean).join(" / ")||"No contact yet",p.intent||"Exploring",p.areas?.join(" or ")||p.area||"Palm Beach County",p.maxPrice?`budget $${p.maxPrice}`:"",p.beds?`${p.beds}+ beds`:"",p.timeline?`timeline: ${p.timeline}`:"",p.preApproved?"Pre-approved":"",`Source: ${state.leadOrigin||state.source||"WEBSITE"}`,state.seller?.address?`Seller address: ${state.seller.address}`:"",state.seller?.reason?`Reason: ${state.seller.reason}`:"",state.seller?.alsoBuying!==undefined?`Also buying: ${state.seller.alsoBuying?"yes":"no"}`:"",state.wanted||"",`Viewed: ${state.viewed.join(", ")||"none"}; saved: ${state.saved.join(", ")||"none"}`,state.appointments.at(-1)?.preferredTime||""].filter(Boolean).join(" · ").slice(0,900);
+ for(const channel of (automaticSms()?["email","sms"]:["email"]) as ("email"|"sms")[])state.notifications.push({id:randomUUID(),reason,summary:summary+ (state.lead?`\nOpen lead: ${siteUrl()}/admin/leads/${state.id}`:""),status:"pending",attempts:0,nextAttemptAt:now(),channel,audience:"agent"});
  event(state,"agent_notification_queued",reason);
 }
 export function confirmAction(state:PaxState,id:string,accepted:boolean){
@@ -60,18 +62,18 @@ export function confirmAction(state:PaxState,id:string,accepted:boolean){
  if(!accepted){action.status="declined";state.declinedAtTurn=state.messages.filter(m=>m.role==="user").length;event(state,"action_declined",action.kind);return {status:"declined",message:"No problem. You can keep browsing freely."};}
  action.status="confirmed";
  const hadLead=!!state.lead;
- if(!state.lead){state.lead={...action.contact,id:randomUUID(),capturedAt:now()};event(state,"lead_captured","WEBSITE");}
+ if(!state.lead){state.leadOrigin="PAX_CHAT";state.lead={...action.contact,id:randomUUID(),capturedAt:now()};event(state,"lead_captured","WEBSITE");}
  else Object.assign(state.lead,action.contact);
  let message="Your contact information is saved for Paul to follow up about this request.";
  if(action.kind==="SEARCH"){
   saveConfirmedSearch(state,action.preferences,action.id);event(state,"saved_search_created");
-  message="Your search preferences are saved. We’ll check for new matching samples; email alerts require your email permission and a running alert service. These are fictional samples, not live MLS listings. Paul handles texts personally unless automatic texting is enabled.";
+  message=`Your search preferences are saved. We’ll check for new matches; email alerts require your email permission and a running alert service.${state.feedMode!=="live"?" These are fictional samples, not live MLS listings.":""} Paul handles texts personally unless automatic texting is enabled.`;
  }
- if(action.kind==="CALL"){
-  state.appointments.push({id:action.id,kind:"CALL",preferredTime:action.preferredTime!,status:"REQUESTED",createdAt:now()});event(state,"appointment_requested","CALL");
-  message="Your call request is recorded. Paul still needs to confirm the time; it is not booked yet.";
+ if(action.kind==="CALL"||action.kind==="SHOWING"){
+  state.appointments.push({id:action.id,kind:action.kind,preferredTime:action.preferredTime!,status:"REQUESTED",createdAt:now()});event(state,"appointment_requested","CALL");
+  message=`Your ${action.kind==="SHOWING"?"showing":"call"} request is recorded. Paul still needs to confirm the time; it is not booked yet.`;
  }
- if(action.kind==="VALUATION")message="Your request for a free home value report is recorded for Paul to review. Pax has not generated a valuation.";
+ if(action.kind==="VALUATION"){state.preferences.intent="SELLER";state.seller={...state.seller,address:action.address||state.seller?.address};message="Your free local pricing review request is saved for Paul. Pax has not generated a valuation.";}
  if(!hadLead)notify(state,"lead captured");else if(action.kind!=="CONTACT")notify(state,`${action.kind.toLowerCase()} requested ${action.id}`);
  event(state,"action_confirmed",action.kind);return {status:"confirmed",message};
 }

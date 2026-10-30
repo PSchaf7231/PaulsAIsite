@@ -36,7 +36,7 @@ test('declining contact preserves free browsing and creates no lead',async({page
  await expect(page.getByRole('dialog').getByTestId('listing-card')).toHaveCount(1);expect((await session(page)).lead).toBeUndefined();
 });
 test('seller and hot-lead signals are recorded; samples cannot be toured',async({page})=>{
- await begin(page);await say(page,'We need to sell first');await expect(page.getByText(/Paul can help with a free home value report/)).toBeVisible();expect((await session(page)).preferences.intent).toBe('SELLER');
+ await begin(page);await say(page,'We need to sell first');await expect(page.getByText(/Paul can help with a free local pricing review/)).toBeVisible();expect((await session(page)).preferences.intent).toBe('SELLER');
  await say(page,"I'm pre-approved and moving within 60 days");await say(page,'I want to book a showing');await expect(page.getByText(/These homes are fictional samples, so they can’t be toured/)).toBeVisible();
  const s=await session(page);expect(s.preferences.preApproved).toBe(true);expect(s.events.some((e:{kind:string})=>e.kind==='hot_lead')).toBe(true);expect(s.appointments).toHaveLength(0);
 });

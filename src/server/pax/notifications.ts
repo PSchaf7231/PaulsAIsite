@@ -17,7 +17,7 @@ export async function deliverNotification(n:Notification,fetcher:typeof fetch=fe
  if(!to)return {status:"unconfigured" as const};
  if(channel==="email"){
   if(!process.env.RESEND_API_KEY||!process.env.RESEND_FROM||!to)return {status:"unconfigured" as const};
-  response=await fetcher("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":n.id},body:JSON.stringify({from:process.env.RESEND_FROM,to:[to],reply_to:process.env.PAX_AGENT_EMAIL,subject:n.audience==="lead"?"Your request to Paul Schafranick":"Pax: a visitor needs your attention",text:`${n.summary}\n\n${agent.name}`}),signal:AbortSignal.timeout(10000)});
+  response=await fetcher("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":n.id},body:JSON.stringify({from:process.env.RESEND_FROM,to:[to],reply_to:process.env.PAX_AGENT_EMAIL,subject:n.audience==="lead"?"Your request to Paul Schafranick":n.summary.startsWith("SELLER")?"Pax: SELLER needs your attention":"Pax: a visitor needs your attention",text:`${n.summary}\n\n${agent.name}`}),signal:AbortSignal.timeout(10000)});
  }else if(channel==="sms"){
   const account=process.env.TWILIO_ACCOUNT_SID,token=process.env.TWILIO_AUTH_TOKEN,from=process.env.TWILIO_FROM_NUMBER;
   if(!account||!token||!from||!to)return {status:"unconfigured" as const};

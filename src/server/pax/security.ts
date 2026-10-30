@@ -1,3 +1,4 @@
+import { siteUrl } from "../../lib/config";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { PaxBusyError } from "./store";
@@ -12,7 +13,7 @@ export async function identity(create=false){
 }
 export class RequestError extends Error{constructor(message:string,public status=400){super(message);}}
 export async function readBody(req:Request){
- if(req.headers.get("origin")!==new URL(process.env.SITE_URL||req.url).origin)throw new RequestError("This request must come from this website.",403);
+ if(req.headers.get("origin")!==new URL(process.env.NEXT_PUBLIC_SITE_URL||process.env.SITE_URL||req.url).origin)throw new RequestError("This request must come from this website.",403);
  if(!req.headers.get("content-type")?.startsWith("application/json"))throw new RequestError("Expected JSON.",415);
  const reader=req.body?.getReader();if(!reader)throw new RequestError("Missing request.");
  let size=0,text="";const decoder=new TextDecoder();

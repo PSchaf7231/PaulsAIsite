@@ -1,0 +1,27 @@
+import {test,expect,type Page} from '@playwright/test';
+const bar=(page:Page)=>page.getByRole('navigation',{name:'Ask Pax about this home',exact:true});
+async function say(page:Page,text:string){const panel=page.locator('.pax-drawer');await panel.getByLabel('Message Pax',{exact:true}).fill(text);await panel.getByRole('button',{name:'Send message',exact:true}).click();await expect(panel.getByLabel('Message Pax',{exact:true})).toBeEnabled();}
+async function open(page:Page){await bar(page).getByRole('button',{name:'Ask Pax about this home',exact:true}).click();const panel=page.getByRole('dialog',{name:'Ask Pax',exact:true});await expect(panel.getByText('Automated test mode · no live AI or delivery')).toBeVisible();const consent=panel.getByRole('checkbox');if(await consent.count())await consent.first().check();}
+test('plain-English summary, grouped details, photos and contextual quick buttons',async({page})=>{
+ await page.goto('/listings/boynton-poolside');await expect(page.getByRole('region',{name:'Pax’s home summary'}).getByRole('listitem')).toHaveCount(4);await expect(page.locator('#home-outdoor')).not.toHaveAttribute('open','');await page.locator('#home-outdoor summary').click();await expect(page.locator('#home-outdoor')).toContainText('Private pool');
+ await page.getByRole('button',{name:'Open photo 1',exact:true}).click();const photos=page.getByRole('dialog',{name:'Property photos'});await expect(photos).toBeVisible();await photos.getByRole('button',{name:'Next photo'}).click();await expect(photos).toContainText('Photo 2 of 2');await photos.getByRole('button',{name:'Close photos'}).click();await expect(photos).not.toBeVisible();
+ const position=await bar(page).boundingBox();expect(position!.y+position!.height).toBeLessThanOrEqual(page.viewportSize()!.height+1);
+ for(const question of ['What’s nearby','Request a showing','Compare to my saved homes','What would my payment be']){await bar(page).getByRole('button',{name:question,exact:true}).click();const panel=page.getByRole('dialog',{name:'Ask Pax',exact:true});await expect(panel.getByLabel('Message Pax',{exact:true})).toHaveValue(question);await expect(page).toHaveURL(/boynton-poolside$/);await panel.getByRole('button',{name:'Close Pax'}).click();}
+ await open(page);await say(page,'Find a home in Delray under 600k');await page.getByRole('button',{name:'Close Pax'}).click();await expect(page.getByRole('region',{name:'Pax’s home summary'})).toContainText('outside at least one');
+});
+test('Pax opens a section and photos, then moves to the next actual search result',async({page})=>{
+ await page.goto('/listings/delray-courtyard');await open(page);await say(page,'just show me homes');
+ await say(page,'Scroll to outdoor living');await expect(page.getByRole('dialog',{name:'Ask Pax',exact:true})).not.toBeVisible();await expect(page.locator('#home-outdoor')).toHaveAttribute('open','');await expect(page.locator('#home-outdoor')).toBeFocused();
+ await open(page);await say(page,'Open photos');await expect(page.getByRole('dialog',{name:'Property photos'})).toBeVisible();await page.getByRole('button',{name:'Close photos'}).click();
+ await open(page);const state=(await (await page.request.get('/api/pax/session')).json()).session;const next=state.results[state.results.indexOf('delray-courtyard')+1];expect(next).toBeTruthy();await say(page,'Go to the next result');await expect(page).toHaveURL(new RegExp(`/listings/${next}$`));await expect(page.getByRole('dialog',{name:'Ask Pax',exact:true})).not.toBeVisible();
+ await open(page);await expect(page.getByRole('log')).toContainText('Open photos');await page.getByRole('button',{name:'Close Pax'}).click();await page.reload();await expect(page.getByRole('dialog')).not.toBeVisible();
+});
+test('voice typing is opt-in, reviews the transcript, and stops when Pax closes',async({page})=>{
+ await page.addInitScript(()=>{
+  const w=window as unknown as {SpeechRecognition:unknown;finishVoice:()=>void;voiceStarts:number;voiceAborts:number};w.voiceStarts=0;w.voiceAborts=0;
+  w.SpeechRecognition=class{onresult:((event:unknown)=>void)|null=null;onend:(()=>void)|null=null;start(){w.voiceStarts++;w.finishVoice=()=>{this.onresult?.({results:[[{transcript:'Open photos'}]]});this.onend?.();};}abort(){w.voiceAborts++;this.onend?.();}stop(){this.onend?.();}};
+ });
+ await page.goto('/listings/delray-courtyard');await open(page);const panel=page.getByRole('dialog',{name:'Ask Pax',exact:true});await panel.getByRole('button',{name:'Speak to Pax'}).click();expect(await page.evaluate(()=>(window as unknown as {voiceStarts:number}).voiceStarts)).toBe(0);await panel.getByRole('button',{name:'Start microphone'}).click();
+ await page.evaluate(()=>(window as unknown as {finishVoice:()=>void}).finishVoice());await expect(panel.getByLabel('Message Pax',{exact:true})).toHaveValue('Open photos');await expect(page.getByRole('dialog',{name:'Property photos'})).not.toBeVisible();await say(page,'Open photos');await expect(page.getByRole('dialog',{name:'Property photos'})).toBeVisible();await page.getByRole('button',{name:'Close photos'}).click();
+ await open(page);await panel.getByRole('button',{name:'Speak to Pax'}).click();await panel.getByRole('button',{name:'Start microphone'}).click();const before=await page.evaluate(()=>(window as unknown as {voiceAborts:number}).voiceAborts);await panel.getByRole('button',{name:'Close Pax'}).click();await expect.poll(()=>page.evaluate(()=>(window as unknown as {voiceAborts:number}).voiceAborts)).toBeGreaterThan(before);
+});

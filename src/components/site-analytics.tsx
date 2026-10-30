@@ -1,4 +1,5 @@
 'use client';
+import { aiReferral } from '@/lib/ai-referral';
 import Script from 'next/script';
 import { useEffect,useState } from 'react';
 import { usePathname } from 'next/navigation';
@@ -21,7 +22,8 @@ export default function SiteAnalytics(){
   if(!allowed)return;
   const w=window as AnalyticsWindow;w.dataLayer??=[];w.gtag??=((...args)=>{w.dataLayer!.push(args);});
   const cleanUrl=location.origin+path;
-  w.gtag('js',new Date());w.gtag('config',id,{send_page_view:false,allow_google_signals:false,allow_ad_personalization_signals:false,page_location:cleanUrl,page_referrer:document.referrer?new URL(document.referrer).origin:''});w.gtag('event','page_view',{page_location:cleanUrl,page_path:path,page_title:document.title});
+  const referral=aiReferral(document.referrer,location.search);
+  w.gtag('js',new Date());w.gtag('config',id,{send_page_view:false,allow_google_signals:false,allow_ad_personalization_signals:false,page_location:cleanUrl,page_referrer:document.referrer?new URL(document.referrer).origin:''});w.gtag('event','page_view',{page_location:cleanUrl,page_path:path,page_title:document.title,...(referral?{ai_referral_source:referral}: {})});
  },[path,allowed]);
  function choose(value:string){try{localStorage.setItem('pax-analytics',value);}catch{}setChoice(value);}
  if(!valid||!ready||!analyticsPublicPath(path))return null;

@@ -1,6 +1,8 @@
 # Palm Beach Living — Phase 3: lead conversion
 
-For **Paul Schafranick** · 561-255-7285 · paul@palmbeachrealestatepros.com. Brokerage branding remains omitted. Local development only; nothing is deployed.
+Current launch setup: [VERCEL-LAUNCH-SETUP.md](VERCEL-LAUNCH-SETUP.md). This release adds Spark IDX with sample fallback, email-first buyer/seller capture, AI discovery and contextual listing detail tools. The older phase notes below describe the earlier sample-only setup.
+
+For **Paul Schafranick** · 561-255-7285 · paul@palmbeachrentalpros.com. Brokerage branding remains omitted. Local development only; nothing is deployed.
 
 **Latest update:** [Manual texting, private lead pages, conversational saved searches and sample alerts](MANUAL-TEXTING-AND-SEARCHES.md). Twilio is off by default.
 
@@ -121,3 +123,7 @@ Facebook Instant Forms ingestion, broader anonymous conversion triggers, visitor
 ## SEO and in-page Pax
 
 See [SEO and Google setup](SEO-AND-GOOGLE-SETUP.md) for draft neighborhood reviews, Search Console, optional Analytics and the persistent desktop/mobile chat panel. Indexing stays off by default while the site contains sample data and unreviewed copy.
+
+## Listing detail experience
+
+See [Listing detail setup and checks](LISTING-DETAIL-SETUP.md) for the personalized summary, grouped details, pinned Pax shortcuts, photo viewer, page controls and optional browser voice typing.

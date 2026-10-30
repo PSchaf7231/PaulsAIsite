@@ -1,3 +1,4 @@
+import { sellerSignal,markSeller } from "./seller";
 import { randomUUID } from "node:crypto";
 import type { PaxState } from "../../lib/pax";
 import { event, now, flagHot } from "./state";
@@ -10,8 +11,9 @@ export function prepareTurn(state:PaxState,turnId:string,text:string){
  const recent=state.messages.filter(m=>m.role==="user"&&Date.parse(m.at)>Date.now()-3600000);
  if(recent.length>=30)throw new RequestError("You’ve reached this chat’s hourly limit. Please contact Paul directly or try again later.",429);
  if(state.messages.length>=160)throw new RequestError("This conversation has reached its limit. Please contact Paul directly.",429);
+ state.pageAction=undefined;
  state.messages.push({id:turnId,role:"user",text,at:now()});
- if(/\b(?:we|i) (?:need|have) to sell first\b/i.test(text))state.preferences.intent="SELLER";
+ if(sellerSignal(text))markSeller(state);
  if(state.messages.filter(m=>m.role==="user").length===1){event(state,"chat_started");event(state,"chat_consent","pax-privacy-v2");}
  if(/^(no( thanks| thank you)?|not now|just browsing|stop asking)[.! ]*$/i.test(text.trim()))state.declinedAtTurn=state.messages.filter(m=>m.role==="user").length;
  // Only explicit positive statements, not negated or hypothetical phrases, qualify automatically.

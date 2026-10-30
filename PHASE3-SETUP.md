@@ -86,7 +86,7 @@ npm.cmd run pax:worker
 
 Submit a **fresh** test visitor using your own phone and email with both channel boxes checked. Check Paul’s phone and Gmail, then both visitor channels. If a channel is absent or not opted in, it will not receive an automatic acknowledgment. Delivery status appears in `pax:inbox`; provider dashboards show delivery failures beyond API acceptance. `npm.cmd run pax:retry` performs one retry pass. Backoff stops after five failed delivery attempts; inspect failed records before any manual recovery. Resend reuses idempotency keys; Twilio can duplicate a text after an ambiguous timeout, so exactly-once SMS delivery is not promised.
 
-The public website contact email stays paul@palmbeachrealestatepros.com. Only Paul’s notification recipient/reply-to changes to exppbc@gmail.com.
+The public website contact email stays paul@palmbeachrentalpros.com. Only Paul’s notification recipient/reply-to changes to exppbc@gmail.com.
 
 ## 4. Facebook Instant Forms
 

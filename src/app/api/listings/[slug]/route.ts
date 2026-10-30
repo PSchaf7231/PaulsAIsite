@@ -1,0 +1,2 @@
+import { getListing } from '@/server/listings/service';
+export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>}){try{const listing=await getListing((await params).slug);return Response.json({listing},{status:listing?200:404,headers:{'Cache-Control':'public, max-age=30'}});}catch{return Response.json({error:'The live listing service is temporarily unavailable.'},{status:503,headers:{'Cache-Control':'no-store'}});}}

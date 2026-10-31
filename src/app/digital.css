@@ -55,3 +55,4 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
 @media(prefers-reduced-motion:reduce){.floating-pax{animation:none!important}}
 
 .community-card{min-height:280px}.community-card .home-place-photo{height:100%;width:100%;object-fit:cover}.community-card h3,.community-card>span,.community-card .arrow{z-index:2}.community-card h3{font-family:Arial,Helvetica,sans-serif;letter-spacing:-.035em}.community-card:after{background:linear-gradient(transparent 20%,#08182bdb 100%)}
+.photo-credit-link{display:inline-block;margin-right:22px;font-size:11px;color:#aab8ca;text-decoration:underline;text-underline-offset:3px}.filters{grid-template-columns:repeat(6,minmax(0,1fr)) auto}@media(max-width:1000px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:600px){.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}

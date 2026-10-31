@@ -1,8 +1,8 @@
 import {test,expect} from '@playwright/test';
 test('coastal homepage works at 390px and passes all search fields through',async({page})=>{
  await page.setViewportSize({width:390,height:844});await page.goto('/');
- await expect(page.getByRole('heading',{name:/Your next chapter.*A smarter way home/})).toBeVisible();await expect(page.locator('.header')).toContainText('Palm Beach Real Estate Pros');
- expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await expect(page.locator('.home-place')).toHaveCount(6);await expect(page.locator('.coastal-home')).not.toContainText(/sample|demo|placeholder|Headshot to be added/i);
+ await expect(page.getByRole('heading',{name:/Meet Pax.*Your AI home guide/})).toBeVisible();await expect(page.locator('.coastal-hero img, .coastal-hero video')).toHaveCount(0);await expect(page.locator('.header')).toContainText('Palm Beach Real Estate Pros');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await expect(page.locator('.home-place')).toHaveCount(6);await expect(page.locator('.coastal-hero')).not.toContainText(/sample|demo|placeholder|Headshot to be added/i);
  await page.locator('.digital-filters summary').click(); const form=page.getByRole('form',{name:'Find a home'});await form.getByLabel('City or community').selectOption('Boynton Beach');await form.getByLabel('Min price').fill('400000');await form.getByLabel('Max price').fill('650000');await form.getByRole('combobox',{name:'Beds',exact:true}).selectOption('3');await form.getByRole('button',{name:'Search'}).click();
  await expect(page.getByLabel('Min price ($)',{exact:true})).toHaveValue('400000');await expect(page.getByLabel('Max price ($)',{exact:true})).toHaveValue('650000');await expect(page.getByRole('combobox',{name:'Bedrooms',exact:true})).toHaveValue('3');await expect(page.getByTestId('listing-card')).toHaveCount(1);await expect(page.getByTestId('listing-card')).toContainText('Boynton Beach');
 });

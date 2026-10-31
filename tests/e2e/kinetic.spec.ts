@@ -10,3 +10,5 @@ test('card effects animate, pause, and respect reduced motion',async({page})=>{
  await expect.poll(()=>card.locator('.listing-photo').evaluate(el=>getComputedStyle(el,'::after').display)).toBe('none');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
+
+test('quiet pages share the moving backdrop',async({page})=>{await page.emulateMedia({reducedMotion:'no-preference'});await page.goto('/contact');await expect.poll(()=>page.locator('.site-ai-atmosphere').evaluate(el=>getComputedStyle(el,'::after').animationName)).toBe('site-light-pass');await expect(page.getByRole('dialog')).not.toBeVisible();});

@@ -40,3 +40,6 @@ html[data-visual-motion=paused] *,html[data-visual-motion=paused] *::before,html
 /* Shared ambience also reaches text, contact and guide pages, without intercepting input. */
 body{isolation:isolate}.site-ai-atmosphere{position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden;background:linear-gradient(125deg,#edf3fb,#f8fafc 50%,#edf5f6)}.site-ai-atmosphere:before{content:'';position:absolute;inset:-30%;background:radial-gradient(ellipse at 30% 40%,#35bdd519,transparent 45%),radial-gradient(ellipse at 70% 60%,#c5a05917,transparent 40%);animation:hero-light-drift 12s ease-in-out infinite alternate}.site-ai-atmosphere:after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 25%,#68b5d20b 48%,transparent 70%);background-size:200% 100%;animation:site-light-pass 14s ease-in-out infinite alternate}@keyframes site-light-pass{from{background-position:100% 0}to{background-position:0 0}}
 @media(prefers-reduced-motion:reduce){.site-ai-atmosphere:before,.site-ai-atmosphere:after{animation:none}}
+
+/* Discreet accessibility preference; retain a comfortable touch target. */
+.motion-control{margin-top:12px;min-height:44px;padding:10px 0;border:0;border-radius:0;background:transparent;color:#aab8ca;font-size:11px;font-weight:400;text-decoration:underline;text-underline-offset:3px}.motion-control:hover{color:#e1e8f2}

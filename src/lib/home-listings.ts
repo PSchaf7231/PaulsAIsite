@@ -1,2 +1,5 @@
 import type {Listing} from './listings';
-export function featuredHomes(listings:Listing[]){return listings.filter(l=>!l.isSample&&l.status==='ACTIVE').sort((a,b)=>Date.parse(b.listedAt||b.updatedAt||'1970-01-01')-Date.parse(a.listedAt||a.updatedAt||'1970-01-01')).slice(0,6);}
+// Never fill sale slots with cheaper homes, condos, or unverified property types.
+export function featuredHomes(listings:Listing[],type:'SALE'|'RENT'){
+ return listings.filter(l=>!l.isSample&&l.status==='ACTIVE'&&l.type===type&&(type==='RENT'||(l.propertyType==='HOUSE'&&l.price>=2000000))).sort((a,b)=>b.price-a.price).slice(0,6);
+}

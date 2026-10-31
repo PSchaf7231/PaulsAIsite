@@ -1,19 +1,19 @@
 import { test,expect } from '@playwright/test';
-test('anonymous favorites trigger a soft ask, attach history, and preserve free browsing',async({page})=>{
+test('anonymous favorites stay quiet and attach history to an invited follow-up',async({page})=>{
  await page.goto('/listings');await page.getByRole('button',{name:'Save this home',exact:true}).first().click();
- await expect(page.getByRole('button',{name:'Saved',exact:true})).toBeVisible();await expect(page.getByLabel('Pax suggestion')).toBeVisible();
- await page.getByRole('button',{name:'Save my preferences',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Saved',exact:true})).toBeVisible();await expect(page.getByLabel('Pax suggestion')).toHaveCount(0);
+ await page.getByRole('button',{name:'Ask Paul to follow up',exact:true}).click();
  await expect(page.getByLabel('Your name',{exact:true})).toHaveCount(0);await expect(page.getByLabel('Phone',{exact:true})).toHaveCount(0);await page.getByLabel('Email',{exact:true}).fill('buyer@example.com');
  await expect(page.getByRole('checkbox',{name:/Text me an automated/})).toHaveCount(0);await page.getByRole('checkbox',{name:/Email my acknowledgment/}).check();
  await page.getByRole('button',{name:'Send my request',exact:true}).click();await expect(page.getByLabel('Next steps with Pax').getByRole('status')).toContainText('Your request is saved');
  const state=(await (await page.request.get('/api/pax/session')).json()).session;expect(state.lead.email).toBe('buyer@example.com');expect(state.saved.length).toBe(1);expect(state.source).toBe('WEBSITE');expect(state.communicationConsent).toMatchObject({sms:false,email:true});
  await expect(page.getByTestId('listing-card')).toHaveCount(5);
 });
-test('not now pauses offers without capturing contact or blocking photos',async({page})=>{
- await page.goto('/listings');await page.getByRole('button',{name:'Save this home',exact:true}).first().click();await expect(page.getByLabel('Pax suggestion')).toBeVisible();
- await page.getByRole('button',{name:'Not now',exact:true}).click();await expect(page.getByLabel('Pax suggestion')).toHaveCount(0);
+test('browsing favorites never opens an offer or captures contact',async({page})=>{
+ await page.goto('/listings');await page.getByRole('button',{name:'Save this home',exact:true}).first().click();await expect(page.getByLabel('Pax suggestion')).toHaveCount(0);
+ await expect(page.getByRole('dialog')).not.toBeVisible();
  await page.getByTestId('listing-card').first().click();await expect(page.locator('h1')).toBeVisible();
- const state=(await (await page.request.get('/api/pax/session')).json()).session;expect(state.lead).toBeUndefined();expect(state.activity.dismissedUntil).toBeGreaterThan(Date.now());
+ const state=(await (await page.request.get('/api/pax/session')).json()).session;expect(state.lead).toBeUndefined();
 });
 
 test('Facebook HTTP webhook verifies challenge/signature and durably deduplicates receipt',async({request},testInfo)=>{

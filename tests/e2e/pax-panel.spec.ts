@@ -21,5 +21,5 @@ test('Pax stays over the current home, preserves scroll and conversation across 
 });
 test('homepage has only a small neighborhood link and chat buttons keep its URL',async({page})=>{
  await page.goto('/');await expect(page.getByRole('heading',{name:'Find your kind of Florida.'})).toHaveCount(0);await expect(page.getByRole('link',{name:'Neighborhood guides'})).toHaveCount(1);
- await page.locator('.coastal-hero').getByRole('button',{name:'Ask Pax',exact:true}).click();await expect(page.getByRole('dialog')).toBeVisible();await expect(page).toHaveURL('http://localhost:3000/');
+ await page.locator('.digital-suggestions').getByRole('button',{name:'Oceanfront in Palm Beach ↗',exact:true}).click();await expect(page.getByRole('dialog')).toBeVisible();await expect(page).toHaveURL('http://localhost:3000/');
 });

@@ -7,6 +7,7 @@ import type { Listing } from '@/lib/listings';
 import { communities } from '@/lib/communities';
 const PaxChat=dynamic(()=>import('./pax-chat'),{loading:()=> <p role="status">Loading Pax…</p>});
 const PaxContext=createContext<(message?:string)=>void>(()=>{});
+export function usePax(){return useContext(PaxContext);}
 export function PaxButton({children='Ask Pax',className='btn',message}:{children?:React.ReactNode;className?:string;message?:string}){
  const open=useContext(PaxContext);
  return <button type="button" className={className} onClick={()=>open(message)} aria-haspopup="dialog">{children}</button>;

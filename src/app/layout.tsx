@@ -7,6 +7,7 @@ import { agent, siteUrl } from "@/lib/config";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import "./globals.css";
+import "./digital.css";
 import LeadConversion from "@/components/lead-conversion";
 export const metadata:Metadata={metadataBase:new URL(siteUrl()),title:{default:`${agent.brandName} | ${agent.name}`,template:`%s | ${agent.brandName}`},description:`Explore Palm Beach County homes and communities with ${agent.name}.`,robots:{index:indexingEnabled(),follow:true},verification:{google:process.env.GOOGLE_SITE_VERIFICATION||undefined}};
 export default function RootLayout({children}:{children:React.ReactNode}){

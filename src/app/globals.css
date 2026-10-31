@@ -40,3 +40,25 @@
 @media(max-width:1000px){.coastal-search{grid-template-columns:2fr 1fr 1fr}.coastal-search label{padding:10px}.coastal-search>.btn{margin:8px}.brand strong{font-size:19px}.home-places{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.brand strong{max-width:220px;font-size:18px}.brand small{font-size:8px}.nav{gap:12px}.brand-mark{display:none}.coastal-hero-content{padding-top:52px;padding-bottom:55px}.coastal-hero h1{font-size:48px}.coastal-hero{min-height:85svh}.coastal-hero p{font-size:13px}.coastal-search{grid-template-columns:1fr 1fr;margin-top:30px;padding:9px}.coastal-search label:first-child{grid-column:1/-1}.coastal-search label{padding:8px;border-bottom:1px solid #e6e8e5}.coastal-search>.btn{grid-column:1/-1;margin:9px 0 0;width:100%}.coastal-search input,.coastal-search select{font-size:16px}.coastal-location{right:24px;bottom:16px;font-size:8px}.coastal-section{padding-top:60px;padding-bottom:60px}.coastal-section-head{align-items:start;flex-direction:column;gap:24px;margin-bottom:28px}.home-listings,.home-places{grid-template-columns:1fr}.home-place{min-height:190px}.coastal-contact>.container{align-items:start;flex-direction:column}.coastal-contact-actions{text-align:left}.coastal-seller{padding:45px 20px}.coastal-hero .actions .btn{flex:1;justify-content:center}.footer .brand strong{max-width:260px}}
 .home-place{background:#233d43!important;color:white;min-height:270px}.home-place:before{display:none}.home-place:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#102b3810 20%,#102b38d9 100%);pointer-events:none}.home-place-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.home-place>div,.home-place>span{z-index:1}.home-place .place-number{color:#fff9}.home-place p{color:#fffC}.home-place:hover{color:white}.home-photo-credits{font-size:11px;color:#65747b;margin-top:20px}.home-photo-credits summary{cursor:pointer}.home-photo-credits ul{padding-left:18px}.home-photo-credits p{margin-top:12px}
+/* Homepage palette follows Hobson's NAVY #0A1628 / GOLD #D4AF37.
+   Scope to the homepage so listing pages and Pax's inner UI stay unchanged. */
+body:has(.coastal-home){--ink:#0a1628;--deep:#0a1628;--teal:#80651b;--muted:#657080;--line:#e5dfd3}
+.coastal-home{--ink:#0a1628;--deep:#0a1628;--teal:#80651b;--muted:#657080;--line:#e5dfd3;color:#0a1628}
+body:has(.coastal-home) .topbar{background:#0a1628;color:#f5eedf}
+body:has(.coastal-home) .header,body:has(.coastal-home) .footer{color:#0a1628}
+body:has(.coastal-home) .brand-mark{color:#80651b;border-color:#d4af37}
+body:has(.coastal-home) .header .btn,body:has(.coastal-home) .floating-pax{background:#0a1628;color:#f3dc90;border:1px solid #d4af37}
+.coastal-home .btn{background:#d4af37;border-color:#d4af37;color:#0a1628}
+.coastal-home .btn:hover{background:#e2c56d;border-color:#e2c56d;color:#0a1628}
+.coastal-home .btn.light{background:#fffdf8;border-color:#fffdf8;color:#0a1628}
+.coastal-home .coastal-glass{background:#0a162840;border-color:#d4af37;color:#fff5d5}
+.coastal-home .btn.outline{background:transparent;color:#0a1628;border-color:#a58a43}
+.coastal-hero{background:#0a1628}.coastal-shade{background:linear-gradient(180deg,#0a162818 0%,#0a162855 35%,#0a1628c9 100%)}
+.coastal-search,.coastal-search input,.coastal-search select{color:#0a1628}.coastal-search label{border-color:#e5dfd3}
+.home-toggle{border-color:#d8c99f}.home-toggle button{color:#0a1628}.home-toggle button[aria-pressed=true]{background:#0a1628;color:#f3dc90}
+.coastal-communities,.coastal-seller{background:#f7f4ed}.coastal-contact{background:#f1ebdf}.home-empty{background:#f7f4ed}.home-empty a{color:#80651b}
+.home-place{background:#0a1628!important}.home-place:after{background:linear-gradient(180deg,#0a162810 20%,#0a1628d9 100%)}.home-place .place-number{color:#f3dc90}
+body:has(.coastal-home) .lead-conversion{background:#f7f4ed;border-color:#e5dfd3;color:#0a1628}
+body:has(.coastal-home) .lead-conversion .btn{background:#0a1628;color:#fff5d5;border-color:#a58a43}
+body:has(.coastal-home) .lead-conversion .btn.outline{background:transparent;color:#0a1628}
+body:has(.coastal-home) .coastal-home :focus-visible{outline-color:#d4af37}

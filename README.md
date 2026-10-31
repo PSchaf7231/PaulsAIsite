@@ -1,4 +1,4 @@
-# Palm Beach Living — Phase 3: lead conversion
+# Palm Beach Real Estate Pros — Phase 3: lead conversion
 
 Current launch setup: [VERCEL-LAUNCH-SETUP.md](VERCEL-LAUNCH-SETUP.md). This release adds Spark IDX with sample fallback, email-first buyer/seller capture, AI discovery and contextual listing detail tools. The older phase notes below describe the earlier sample-only setup.
 

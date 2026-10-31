@@ -1,0 +1,11 @@
+// Source/author/license verified on the linked Wikimedia Commons file pages.
+// Thumbnails load lazily from Wikimedia; CSS crops are covered by the same image license.
+const thumb='https://thumb.wikimedia.org/wikipedia/commons/thumb/';
+export const homePlaces=[
+ {city:'Palm Beach',tag:'Ocean air. Timeless surroundings.',file:'Worth_Avenue.jpg',photo:thumb+'7/73/Worth_Avenue.jpg/960px-Worth_Avenue.jpg',author:'Andyxox',license:'Public domain',licenseUrl:'https://creativecommons.org/publicdomain/mark/1.0/',alt:'Worth Avenue in Palm Beach'},
+ {city:'Delray Beach',tag:'A coastal rhythm all its own.',file:'Atlantic_Avenue.jpg',photo:thumb+'e/ec/Atlantic_Avenue.jpg/960px-Atlantic_Avenue.jpg',author:'Delray Beach Historical Society / author unknown',license:'CC0',licenseUrl:'https://creativecommons.org/publicdomain/zero/1.0/',alt:'Historic view of Atlantic Avenue, Delray Beach'},
+ {city:'Boca Raton',tag:'Room for your next chapter.',file:'Mizner_Park.jpg',photo:thumb+'5/54/Mizner_Park.jpg/960px-Mizner_Park.jpg',author:'Elfguy',license:'Public domain',licenseUrl:'https://creativecommons.org/publicdomain/mark/1.0/',alt:'Mizner Park in Boca Raton'},
+ {city:'Jupiter',tag:'Life closer to the water.',file:'Jupiter_Inlet_Lighthouse.jpg',photo:'https://upload.wikimedia.org/wikipedia/commons/c/c7/Jupiter_Inlet_Lighthouse.jpg',author:'Clinton & Charles Robertson',license:'CC BY-SA 2.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/2.0/',alt:'Jupiter Inlet Lighthouse'},
+ {city:'West Palm Beach',tag:'City energy. Coastal perspective.',file:'West_Palm_Beach,_Florida,_US,_skyline.jpg',photo:thumb+'9/9b/West_Palm_Beach%2C_Florida%2C_US%2C_skyline.jpg/960px-West_Palm_Beach%2C_Florida%2C_US%2C_skyline.jpg',author:'Jud McCranie',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',alt:'West Palm Beach waterfront skyline'},
+ {city:'Wellington',tag:'Space to slow down.',file:'Wellington_Florida_Aerial.jpg',photo:thumb+'7/74/Wellington_Florida_Aerial.jpg/960px-Wellington_Florida_Aerial.jpg',author:'formulanone',license:'CC BY-SA 2.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/2.0/',alt:'Aerial photograph of Wellington, Florida'}
+];

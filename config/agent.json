@@ -1,6 +1,6 @@
 {
   "name": "Paul Schafranick",
-  "brandName": "Palm Beach Living",
+  "brandName": "Palm Beach Real Estate Pros",
   "licenseNumber": "",
   "phone": "561-255-7285",
   "email": "paul@palmbeachrentalpros.com",
@@ -28,5 +28,6 @@
     "Jupiter",
     "Wellington",
     "Palm Beach Gardens"
-  ]
+  ],
+  "brokerage": ""
 }

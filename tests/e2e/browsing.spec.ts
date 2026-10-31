@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
 test("homepage, contact details, and Pax are available",async({page})=>{
  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
- await page.goto("/");await expect(page.getByRole("heading",{name:"A place to live. A life to love."})).toBeVisible();
+ await page.goto("/");await expect(page.getByRole("heading",{name:"Where Palm Beach comes home."})).toBeVisible();
  await expect(page.locator('a[href="tel:5612557285"]').first()).toBeVisible();
- await expect(page.locator('[data-testid="listing-card"]')).toHaveCount(3);
+ await expect(page.locator('[data-testid="listing-card"]')).toHaveCount(0);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
- await page.getByRole("link",{name:/Work with Paul/}).click();
+ await page.getByRole("link",{name:"Get in touch ↗",exact:true}).click();
  await expect(page.locator('a[href="mailto:paul@palmbeachrentalpros.com"]').first()).toBeVisible();
  await page.locator(".floating-pax").click();await expect(page.getByRole("dialog",{name:"Ask Pax"})).toBeVisible();
  expect(errors).toEqual([]);

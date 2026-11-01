@@ -56,3 +56,7 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
 
 .community-card{min-height:280px}.community-card .home-place-photo{height:100%;width:100%;object-fit:cover}.community-card h3,.community-card>span,.community-card .arrow{z-index:2}.community-card h3{font-family:Arial,Helvetica,sans-serif;letter-spacing:-.035em}.community-card:after{background:linear-gradient(transparent 20%,#08182bdb 100%)}
 .photo-credit-link{display:inline-block;margin-right:22px;font-size:11px;color:#aab8ca;text-decoration:underline;text-underline-offset:3px}.filters{grid-template-columns:repeat(6,minmax(0,1fr)) auto}@media(max-width:1000px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:600px){.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Compact text-only community navigation; homepage city photography is unchanged. */
+.community-card.community-card-text{min-height:0;padding:22px 38px 22px 22px;justify-content:center}.community-card-text>span{max-width:none}.community-card-text:after{display:none}.community-card-text h3{font-size:22px}.featured-loading{min-height:360px}.featured-loading p{margin-top:24px;color:#afc0d5}
+@media(max-width:700px){.community-card.community-card-text{padding:18px 30px 18px 16px}.community-card-text h3{font-size:20px}}

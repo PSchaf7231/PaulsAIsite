@@ -22,7 +22,10 @@
     "pax:worker": "tsx scripts/pax-admin.ts worker"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.94",
+    "@ai-sdk/google": "^4.0.109",
     "@ai-sdk/openai": "^4.0.104",
+    "@ai-sdk/xai": "^5.0.35",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "ai": "^7.0.156",

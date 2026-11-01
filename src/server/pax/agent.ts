@@ -1,8 +1,8 @@
 import { ToolLoopAgent, isStepCount, type LanguageModel } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import { createPaxModel } from "./provider";
 import type { PaxState } from "../../lib/pax";
 import { paxSystemPrompt } from "./prompt";
-import { paxTools } from "./tools";
+import { buyerPaxTools } from "./tools";
 import { dispatchQueued } from "./notifications";
 export async function streamPax(state:PaxState,onText:(text:string)=>void,signal:AbortSignal,checkpoint:()=>Promise<void>=async()=>{}){
  if(process.env.PAX_TEST_MODE==="1"){
@@ -10,9 +10,7 @@ export async function streamPax(state:PaxState,onText:(text:string)=>void,signal
   const {testReply}=await import("./test-reply");
   return testReply(state,onText);
  }
- if(!process.env.OPENAI_API_KEY)throw new Error("OpenAI is not configured.");
- const openai=createOpenAI({apiKey:process.env.OPENAI_API_KEY});
- const agent=createPaxAgent(state,openai.chat(process.env.OPENAI_MODEL||"gpt-4o"),checkpoint);
+ const agent=createPaxAgent(state,createPaxModel(),checkpoint);
  const result=await agent.stream({messages:state.messages.slice(-40).map(m=>({role:m.role,content:m.text})),abortSignal:signal,timeout:60000});
  let text="";
  for await(const part of result.fullStream){
@@ -25,7 +23,7 @@ export async function streamPax(state:PaxState,onText:(text:string)=>void,signal
 
 export function createPaxAgent(state:PaxState,model:LanguageModel,checkpoint:()=>Promise<void>=async()=>{}){
  return new ToolLoopAgent({
-  model,instructions:paxSystemPrompt(state),tools:paxTools(state,async()=>{await checkpoint();await dispatchQueued(state,checkpoint);await checkpoint();}),
+  model,instructions:paxSystemPrompt(state),tools:buyerPaxTools(state,async()=>{await checkpoint();await dispatchQueued(state,checkpoint);await checkpoint();}),
   onError:()=>{},onStepFinish:async()=>{await checkpoint();},stopWhen:isStepCount(5),toolCallConcurrency:1,maxOutputTokens:700,maxRetries:1,
  });
 }

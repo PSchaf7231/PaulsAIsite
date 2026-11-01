@@ -49,3 +49,19 @@ export function paxTools(state:PaxState,onHot:()=>Promise<void>=async()=>{}){ret
  get_schools:tool({description:"Return official school verification resource. No verified school-assignment feed is connected; never invent ratings or assignments.",inputSchema:z.object({address:z.string().max(250)}),execute:async({address})=>({address,verifiedAssignment:null,source:"https://www.palmbeachschools.org/",message:"Verify the exact address with the school district. Paul can help confirm; no assignment or rating is verified here."})}),
  estimate_affordability:tool({description:"Calculate an illustrative monthly payment only from explicit assumptions. Ask for missing inputs one at a time; no approval or financial advice.",inputSchema:z.object({price:z.number().positive().max(100000000),downPayment:z.number().min(0),annualRate:z.number().min(0).max(30),years:z.number().int().min(1).max(40),monthlyTaxesInsuranceHoa:z.number().min(0).max(100000)}),execute:async input=>affordability(input)})
 };}
+
+// Restrict Pax's model-facing tools without altering seller/Hobson workflows.
+export function buyerPaxTools(state:PaxState,onHot:()=>Promise<void>=async()=>{}) {
+ const {record_seller_details,request_home_value_report,...buyerTools}=paxTools(state,onHot);
+ void record_seller_details;void request_home_value_report;
+ const capturePropertyLead=tool({
+  description:'Propose a follow-up tied to the actual home being discussed. Use its verified slug, or the current listing page. Contact must be volunteered by the visitor; confirmation is still required.',
+  inputSchema:contact.extend({listingSlug:z.string().max(240).optional()}),
+  execute:async({listingSlug,...details})=>{
+   const slug=listingSlug||state.currentPage?.listingSlug;
+   if(!slug||!await hydrateListing(state,slug))return {error:'Ask which listed home the visitor wants Paul to follow up about. Do not guess.'};
+   return propose(state,{kind:'CONTACT',listingSlug:slug,contact:details});
+  }
+ });
+ return {...buyerTools,capture_lead:capturePropertyLead,contact_agent:capturePropertyLead};
+}

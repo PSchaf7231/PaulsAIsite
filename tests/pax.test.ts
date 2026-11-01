@@ -57,8 +57,8 @@ describe("Pax conversion boundaries",()=>{
   expect(affordability({price:120000,downPayment:0,annualRate:0,years:10,monthlyTaxesInsuranceHoa:200})).toMatchObject({principalAndInterest:1000,estimatedMonthlyTotal:1200});
   expect(affordability({price:100,downPayment:200,annualRate:1,years:10,monthlyTaxesInsuranceHoa:0})).toHaveProperty("error");
  });
- it("contains conversion, refusal, grounding, seller, and honest completion instructions",()=>{
-  const prompt=paxSystemPrompt(newState(id));for(const term of ["VALUE FIRST","one short question","SELLERS AND HOT LEADS","FIVE FICTIONAL SAMPLE LISTINGS","not booked","Never trap the search","DIFFERENT benefit"])expect(prompt).toContain(term);
+ it("contains conversion, refusal, grounding, buyer, and honest completion instructions",()=>{
+  const prompt=paxSystemPrompt(newState(id));for(const term of ["VALUE FIRST","one short question","BUYER HELP AND HOT LEADS","FIVE FICTIONAL SAMPLE LISTINGS","not booked","Never trap the search","DIFFERENT benefit"])expect(prompt).toContain(term);
  });
 });
 describe("durability and request security",()=>{

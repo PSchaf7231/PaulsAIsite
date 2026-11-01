@@ -1,3 +1,4 @@
+import { paxConfigured } from "@/server/pax/provider";
 import { setFeedMode } from "@/lib/pax-inventory";
 import { hydrateListing } from "@/server/pax/inventory";
 import { sparkConfigured } from "@/server/listings/spark";
@@ -14,7 +15,7 @@ export const runtime="nodejs";
 export async function POST(req:Request){try{
  const input=z.object({text:z.string().trim().min(1).max(2000),turnId:z.string().uuid(),consent:z.literal(true),listingSlug:z.string().max(240).optional(),area:z.string().max(100).optional()}).strict().safeParse(await readBody(req));
  if(!input.success)throw new RequestError("Send a short message and acknowledge the chat privacy notice.");
- if(!process.env.OPENAI_API_KEY&&process.env.PAX_TEST_MODE!=="1")return Response.json({error:"Pax is not connected to OpenAI yet. You can browse listings or contact Paul directly."},{status:503});
+ if(!paxConfigured()&&process.env.PAX_TEST_MODE!=="1")return Response.json({error:"Pax’s AI connection is not configured yet. You can browse listings or contact Paul directly."},{status:503});
  if(process.env.PAX_TEST_MODE==="1"&&(process.env.NODE_ENV==="production"||process.env.PAX_STORAGE!=="local"))throw new RequestError("Test mode is not available here.",503);
  const id=(await identity(true))!;const encoder=new TextEncoder();
  const stream=new ReadableStream({async start(controller){

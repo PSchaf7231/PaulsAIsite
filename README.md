@@ -21,14 +21,15 @@ Keep your existing Supabase connection strings. Add the new entries from `.env.e
 ```dotenv
 LISTINGS_SOURCE="sample"
 SITE_URL="http://localhost:3000"
-OPENAI_API_KEY="YOUR_OPENAI_API_KEY_HERE"
-OPENAI_MODEL="gpt-4o"
+AI_PROVIDER="anthropic"
+AI_MODEL="claude-haiku-5-5"
+ANTHROPIC_API_KEY="YOUR_ANTHROPIC_API_KEY_HERE"
 PAX_STORAGE="database"
 PAX_NOTIFICATIONS="email"
 PAX_SMS_MODE="manual"
 ```
 
-The OpenAI key is a server-side API key with API billing enabled, separate from a ChatGPT subscription. Never put it in `config/agent.json`, a `NEXT_PUBLIC_` variable, or GitHub. `OPENAI_MODEL` can be changed to another tool-capable model available to your OpenAI account. The configured default follows the original gpt-4o brief; model availability must be verified with your account. Do not add your future MLS key yet.
+Pax uses a server-side provider layer. Add your own API key with API billing enabled; never put it in chat, `config/agent.json`, a `NEXT_PUBLIC_` variable, or GitHub. Anthropic is the default; Google and xAI are also supported through `AI_PROVIDER` and `AI_MODEL`. See [Pax provider setup](docs/pax-provider.md) for Vercel instructions. Hobson configuration is independent.
 
 `LISTINGS_SOURCE=sample` controls public browsing. Pax is independently pinned to the same five sample records in this phase, so future changes to that environment variable cannot accidentally enable MLS tool access. `PAX_STORAGE=database` stores chat and conversion records in Supabase; it does not select the listing feed.
 
@@ -66,7 +67,7 @@ See [PHASE3-SETUP.md](PHASE3-SETUP.md) for exact provider account/key instructio
 9. Ask to save search preferences. Confirm the card. It must read back all criteria before confirmation and explain that matching alerts currently use fictional samples.
 10. Open an incognito/private browser: the prior visitor’s messages/contact must not appear.
 11. On a phone-width screen, check the input, confirmation cards, map, and save buttons. No account is required to browse.
-12. Remove the OpenAI key temporarily and restart. Pax should show a useful unavailable state with browsing/contact links, not simulated AI replies. Restore the key afterward.
+12. Remove the selected provider key temporarily and restart. Pax should show a useful unavailable state with browsing/contact links, not simulated AI replies. Restore the key afterward.
 
 ## Inbox, actual confirmations, and conversion reporting
 
@@ -112,9 +113,9 @@ npm.cmd exec playwright install chromium
 npm.cmd run test:e2e
 ```
 
-Stop your running dev server before browser tests. Playwright starts an isolated test-mode server using `.pax-test-data/`, the five samples, deterministic chat replies, and preview notifications. It never calls OpenAI or sends messages to real recipients. Test mode is visibly labeled, is not the default, and is rejected in production or database-storage mode. One unit/integration test exercises the actual AI SDK tool loop using its mock model provider. Live prompt quality and provider delivery still require your account credentials and a manual acceptance pass.
+Stop your running dev server before browser tests. Playwright starts an isolated test-mode server using `.pax-test-data/`, the five samples, deterministic chat replies, and preview notifications. It never calls a paid AI provider or sends messages to real recipients. Test mode is visibly labeled, is not the default, and is rejected in production or database-storage mode. One unit/integration test exercises the actual AI SDK tool loop using its mock model provider. Live prompt quality and provider delivery still require your account credentials and a manual acceptance pass.
 
-For a local preview without Supabase, explicitly set `PAX_STORAGE="local"` while keeping a real `OPENAI_API_KEY` for live AI. Records then persist in ignored `.pax-data/`, never silently fall back from a failed database. This mode is blocked in production. If the dev process crashes mid-write, a stale `.lock` file may remain there; stop all app/worker processes before removing only the stale lock file. Do not delete the JSON record unless you intend to delete that conversation.
+For a local preview without Supabase, explicitly set `PAX_STORAGE="local"` while keeping a real `ANTHROPIC_API_KEY` for live AI. Records then persist in ignored `.pax-data/`, never silently fall back from a failed database. This mode is blocked in production. If the dev process crashes mid-write, a stale `.lock` file may remain there; stop all app/worker processes before removing only the stale lock file. Do not delete the JSON record unless you intend to delete that conversation.
 
 ## Remaining phases
 

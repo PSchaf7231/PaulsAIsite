@@ -52,7 +52,7 @@ export default function MadisonBubble({open,activation,onOpen,onClose,request,li
    <div className="madison-body" hidden={minimized}>
     {status==='idle'?<div className="madison-start"><label><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/>Allow Anam to process my voice and save this chat with my property interests. <Link href="/privacy">Privacy</Link></label><button className="btn small" disabled={!consent} onClick={()=>void start()}>Start video chat</button><span>Or type below. No microphone needed.</span></div>:<div className="madison-video-controls"><button className="btn small outline" disabled={status!=='connected'} onClick={()=>{if(muted)client.current?.unmuteInputAudio();else client.current?.muteInputAudio();setMuted(!muted);}}>{muted?'Unmute microphone':'Mute microphone'}</button><button className="btn small outline" onClick={stop}>End video</button></div>}
     {error&&<p role="alert" className="pax-error">{error}</p>}
-    {loaded&&<PaxChat compact active={open&&!minimized} initialArea={area} listingSlug={listingSlug} request={request} voiceRequest={voiceRequest} voiceConsent={consent} onReply={speak} onPageAction={onPageAction}/>}
+    {loaded&&<PaxChat compact madison active={open&&!minimized} initialArea={area} listingSlug={listingSlug} request={request} voiceRequest={voiceRequest} voiceConsent={consent} onReply={speak} onPageAction={onPageAction}/>}
    </div>
   </aside>
  </>;

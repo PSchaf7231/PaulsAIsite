@@ -6,7 +6,7 @@ export async function createMadisonSession(fetcher:typeof fetch=fetch){
  if(!apiKey)throw new Error('Avatar service is not configured.');
  const response=await fetcher('https://api.anam.ai/v1/auth/session-token',{
   method:'POST',headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},
-  body:JSON.stringify({personaConfig:{name:'Madison',avatarId:MADISON_AVATAR_ID,voiceId:process.env.ANAM_VOICE_ID||DEFAULT_MADISON_VOICE_ID,llmId:'CUSTOMER_CLIENT_V1',maxSessionLengthSeconds:300}}),
+  body:JSON.stringify({personaConfig:{name:'Madison',avatarId:MADISON_AVATAR_ID,voiceId:process.env.ANAM_VOICE_ID||DEFAULT_MADISON_VOICE_ID,llmId:'8dd3c05e-ce36-4b3e-bee3-495f522501aa',maxSessionLengthSeconds:300}}),
   cache:'no-store',signal:AbortSignal.timeout(15000),redirect:'error'
  });
  if(!response.ok)throw new Error('Avatar service could not start.');

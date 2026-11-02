@@ -9,7 +9,7 @@ export const metadata = pageMetadata(
 const team: { name: string; title: string; assistant?: boolean; photo: string; crop: string }[] = [
   { name: "Paul Schafranick", title: "Founder | Realtor®", photo: "/images/team/1-paul-schafranick.jpg", crop: "paul" },
   { name: "Hobson", title: "Real Estate Concierge", assistant: true, photo: "/images/team/2-hobson.jpg", crop: "hobson" },
-  { name: "Madison", title: "Client Care", assistant: true, photo: "/images/team/3-madison.png", crop: "madison" },
+  { name: "Madison", title: "Private Client Concierge", assistant: true, photo: "/images/team/3-madison.png", crop: "madison" },
   { name: "Pax", title: "AI Strategist", photo: "/images/team/4-pax.png", crop: "pax" },
   { name: "A$AP", title: "Director of Operations", photo: "/images/team/5-asap.jpg", crop: "asap" },
   { name: "Chief of Staff", title: "Operations & Deal Flow", photo: "/images/team/6-chief-of-staff.jpg", crop: "chief" },

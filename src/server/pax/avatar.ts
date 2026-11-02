@@ -1,6 +1,6 @@
-export const MADISON_AVATAR_ID = 'cdb09e97-23af-4628-9df7-f8a270fb8265';
-// Anam's documented default voice; can be changed without changing Pax's brain.
-export const DEFAULT_MADISON_VOICE_ID = '6bfbe25a-979d-40f3-a92b-5394170af54b';
+export const MADISON_AVATAR_ID = '9d414187-9553-43b5-a83a-2c149e121703';
+// Paul's Madison voice in Anam Lab: Lacey - Sunny Soul (Sonic 3.5). ANAM_VOICE_ID overrides.
+export const DEFAULT_MADISON_VOICE_ID = '8cc7b2d8-4fc0-11f1-84b0-52bacf74fa75';
 export async function createMadisonSession(fetcher:typeof fetch=fetch){
  const apiKey=process.env.ANAM_API_KEY;
  if(!apiKey)throw new Error('Avatar service is not configured.');

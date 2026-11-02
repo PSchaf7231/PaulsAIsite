@@ -17,7 +17,7 @@ export default function MadisonBubble({open,activation,onOpen,onClose,request,li
  function minimize(){minimizedRef.current=true;client.current?.muteInputAudio();client.current?.interruptPersona();setMuted(true);setMinimized(true);}
  function expand(){minimizedRef.current=false;setMinimized(false);setPosition(p=>p?{x:Math.max(8,Math.min(p.x,innerWidth-Math.min(380,innerWidth-24)-8)),y:Math.max(8,Math.min(p.y,innerHeight-Math.min(660,innerHeight-24)-8))}:null);}
  async function start(){
-  if(!consent||status!=='idle')return;setError('');setStatus('connecting');const attempt=++generation.current;
+  if(status!=='idle')return;setConsent(true);setError('');setStatus('connecting');const attempt=++generation.current;
   try{
    tokenRequest.current=new AbortController();
    const response=await fetch('/api/pax/avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({consent:true}),signal:tokenRequest.current.signal});
@@ -50,7 +50,7 @@ export default function MadisonBubble({open,activation,onOpen,onClose,request,li
     {minimized&&<button className="madison-restore" onClick={expand} aria-label="Restore Madison conversation">✦<span className="sr-only">Microphone paused</span></button>}
    </div>
    <div className="madison-body" hidden={minimized}>
-    {status==='idle'?<div className="madison-start"><label><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/>Allow Anam to process my voice and save this chat with my property interests. <Link href="/privacy">Privacy</Link></label><button className="btn small" disabled={!consent} onClick={()=>void start()}>Start video chat</button><span>Or type below. No microphone needed.</span></div>:<div className="madison-video-controls"><button className="btn small outline" disabled={status!=='connected'} onClick={()=>{if(muted)client.current?.unmuteInputAudio();else client.current?.muteInputAudio();setMuted(!muted);}}>{muted?'Unmute microphone':'Mute microphone'}</button><button className="btn small outline" onClick={stop}>End video</button></div>}
+    {status==='idle'?<div className="madison-start"><p className="madison-start-notice">By starting, you allow microphone access, Anam voice processing, and saving this conversation. <Link href="/privacy">Privacy</Link></p><button className="btn small" onClick={()=>void start()}>Start video chat</button><span>Or type below. No microphone needed.</span></div>:<div className="madison-video-controls"><button className="btn small outline" disabled={status!=='connected'} onClick={()=>{if(muted)client.current?.unmuteInputAudio();else client.current?.muteInputAudio();setMuted(!muted);}}>{muted?'Unmute microphone':'Mute microphone'}</button><button className="btn small outline" onClick={stop}>End video</button></div>}
     {error&&<p role="alert" className="pax-error">{error}</p>}
     {loaded&&<PaxChat compact madison active={open&&!minimized} initialArea={area} listingSlug={listingSlug} request={request} voiceRequest={voiceRequest} voiceConsent={consent} onReply={speak} onPageAction={onPageAction}/>}
    </div>

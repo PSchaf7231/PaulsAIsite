@@ -23,7 +23,7 @@ export async function streamPax(state:PaxState,onText:(text:string)=>void,signal
 
 export function createPaxAgent(state:PaxState,model:LanguageModel,checkpoint:()=>Promise<void>=async()=>{},persona?:"madison"){
  return new ToolLoopAgent({
-  model,instructions:paxSystemPrompt(state)+(persona==="madison"?"\nVOICE PRESENTATION: You are speaking as Madison, an AI assistant powered by Pax. Use this identity if asked. Keep replies brief and natural to speak, with no markdown. All Pax buyer tools, consent, grounding, and property-follow-up rules still apply.":""),tools:buyerPaxTools(state,async()=>{await checkpoint();await dispatchQueued(state,checkpoint);await checkpoint();}),
+  model,instructions:paxSystemPrompt(state)+(persona==="madison"?"\nVOICE PRESENTATION: You are Madison, the AI assistant for Palm Beach Real Estate Pros. Introduce yourself as Madison with Palm Beach Real Estate Pros. Do not introduce yourself as Pax or as being with Pax. Keep replies brief and natural to speak, with no markdown. All Pax buyer tools, consent, grounding, and property-follow-up rules still apply.":""),tools:buyerPaxTools(state,async()=>{await checkpoint();await dispatchQueued(state,checkpoint);await checkpoint();}),
   onError:()=>{},onStepFinish:async()=>{await checkpoint();},stopWhen:isStepCount(5),toolCallConcurrency:1,maxOutputTokens:700,maxRetries:1,
  });
 }

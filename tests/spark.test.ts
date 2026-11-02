@@ -45,3 +45,8 @@ it('uses NEXT_PUBLIC_SITE_URL ahead of legacy localhost configuration',()=>{vi.s
 it('sorts at the provider before limiting results and caps card photos while keeping detail photos',async()=>{
  vi.stubEnv('SPARK_ACCESS_TOKEN','test-ordering');const raw={...record,Media:[...record.Media,...record.Media.map(m=>({...m,Order:2}))]};const fetcher=vi.fn().mockImplementation(()=>Promise.resolve(Response.json({value:[raw]})));const cards=await fetchSpark({sort:'price-asc'},{limit:1},fetcher);expect(new URL(fetcher.mock.calls[0][0]).searchParams.get('$orderby')).toBe('ListPrice asc,ListingKey asc');expect(cards.listings[0].photos).toHaveLength(1);const detail=await fetchSpark({}, {listingId:'RX-1234567'},fetcher);expect(detail.listings[0].photos).toHaveLength(2);
 });
+it('keeps commercial leases out of residential monthly-rent results',()=>{
+ expect(sparkFilter({type:'RENT'})).toContain("PropertyType eq 'Residential Lease'");
+ expect(sparkFilter({type:'RENT'})).not.toContain('Commercial Lease');
+ expect(mapSpark({...record,PropertyType:'Commercial Lease',ListPrice:35},'2026-11-02T00:00:00Z')?.type).toBe('COMMERCIAL');
+});

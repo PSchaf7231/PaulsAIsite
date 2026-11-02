@@ -18,7 +18,7 @@ export function sparkFilter(f:ListingFilters={},listingId?:string){
  if(cities.length)parts.push(`(${cities.map(city=>`City eq ${quote(city)}`).join(' or ')})`);
  for(const term of f.mustHaves||[]){const t=term.toLowerCase().trim();const clause:Record<string,string>={'private pool':'PoolPrivateYN eq true','waterfront':'WaterfrontYN eq true','garage':'GarageSpaces gt 0','no hoa':'AssociationYN eq false','55+':'SeniorCommunityYN eq true'};if(clause[t])parts.push(clause[t]);}
  const subtype:Record<string,string>={HOUSE:'Single Family Residence',CONDO:'Condominium',TOWNHOUSE:'Townhouse',VILLA:'Villa'};if(f.propertyType&&subtype[f.propertyType])parts.push(`PropertySubType eq ${quote(subtype[f.propertyType])}`);
- if(f.type==='RENT')parts.push("(PropertyType eq 'Residential Lease' or PropertyType eq 'Commercial Lease')");
+ if(f.type==='RENT')parts.push("PropertyType eq 'Residential Lease'");
  if(f.type==='SALE')parts.push("PropertyType eq 'Residential'");
  if(f.type==='COMMERCIAL')parts.push("PropertyType eq 'Commercial Sale'");
  for(const [key,field,op] of [['minPrice','ListPrice','ge'],['maxPrice','ListPrice','le'],['beds','BedroomsTotal','ge'],['baths','BathroomsTotalInteger','ge']] as const){const value=f[key];if(value!=null&&Number.isFinite(value)&&value>=0)parts.push(`${field} ${op} ${value}`);}
@@ -30,7 +30,7 @@ export function mapSpark(r:Record<string,unknown>,checkedAt:string):Listing|null
  const address=[text(r.StreetNumber),text(r.StreetDirPrefix),text(r.StreetName),text(r.StreetSuffix),text(r.StreetDirSuffix),r.UnitNumber?`Unit ${text(r.UnitNumber)}`:''].filter(Boolean).join(' ');
  const city=text(r.City),zip=text(r.PostalCode),modified=text(r.ModificationTimestamp);
  if(!id||!key||!office||price===null||!address||!city||!/^\d{5}(?:-\d{4})?$/.test(zip)||!Number.isFinite(Date.parse(modified)))return null;
- const category=text(r.PropertyType),subtype=text(r.PropertySubType);const type=/lease/i.test(category)?'RENT':/commercial/i.test(category)?'COMMERCIAL':'SALE';
+ const category=text(r.PropertyType),subtype=text(r.PropertySubType);const type=/commercial/i.test(category)?'COMMERCIAL':/lease/i.test(category)?'RENT':'SALE';
  const media=Array.isArray(r.Media)?r.Media as Record<string,unknown>[]:[];
  const photos=media.filter(m=>{try{const url=new URL(text(m.MediaURL));return url.protocol==='https:'&&!url.username&&!url.password&&(!m.MediaCategory||/photo/i.test(text(m.MediaCategory)));}catch{return false;}}).sort((a,b)=>(number(a.Order)||0)-(number(b.Order)||0)).slice(0,40).map((m,i)=>({url:text(m.MediaURL),alt:`${address} — MLS photo ${i+1}`,position:i}));
  const features=['InteriorFeatures','ExteriorFeatures','ParkingFeatures','PoolFeatures','WaterfrontFeatures','CommunityFeatures'].flatMap(field=>Array.isArray(r[field])?(r[field] as unknown[]).map(text):text(r[field])?[text(r[field])]:[]).filter(Boolean).map(englishLabel);

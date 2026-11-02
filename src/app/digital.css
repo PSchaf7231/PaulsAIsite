@@ -98,3 +98,13 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
  .madison-launch span{display:flex;align-items:center;justify-content:center;flex:1;width:100%;font-size:14px}
  .madison-launch span::after{content:' · Talk to Madison'}
 }
+/* Keep every control in Madison's conversation legible on the dark site. */
+.madison-panel .quick-links button,.madison-panel .pax-filter-chips button,.madison-panel .results-sheet-handle{background:#173c50;color:#f0faff;border:1px solid #6095a8;min-height:44px}
+.madison-panel .quick-links button:hover,.madison-panel .pax-filter-chips button:hover{background:#24576b;color:#fff}
+.madison-panel .quick-links button:disabled{background:#203747;color:#c0d0dd;opacity:1;border-color:#536d7e}
+.madison-panel .pax-compose textarea{background:#102a3c;color:#f0faff;border:1px solid #6095a8;caret-color:#fff}
+.madison-panel .pax-compose textarea::placeholder{color:#bdd2df;opacity:1}
+.madison-panel .pax-compose textarea:focus{outline:2px solid #6dd8df;outline-offset:2px}
+.madison-panel .pax-results,.madison-panel .pax-result-content,.madison-panel .pax-results-heading,.madison-panel .pax-numbered-card{background:#10283c;color:#eaf5ff;border-color:#406078}
+.madison-panel .pax-results-heading p,.madison-panel .pax-results-heading .eyebrow{color:#bed5e5}
+.madison-panel .pax-results-heading .btn{background:#25566c;color:#fff;border:1px solid #6095a8}

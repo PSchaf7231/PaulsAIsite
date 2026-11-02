@@ -17,6 +17,7 @@ export function sparkFilter(f:ListingFilters={},listingId?:string){
  const cities=f.areas?.length?f.areas:f.city?[f.city]:[];
  if(cities.length)parts.push(`(${cities.map(city=>`City eq ${quote(city)}`).join(' or ')})`);
  for(const term of f.mustHaves||[]){const t=term.toLowerCase().trim();const clause:Record<string,string>={'private pool':'PoolPrivateYN eq true','waterfront':'WaterfrontYN eq true','garage':'GarageSpaces gt 0','no hoa':'AssociationYN eq false','55+':'SeniorCommunityYN eq true'};if(clause[t])parts.push(clause[t]);}
+ if(f.pool)parts.push('PoolPrivateYN eq true');if(f.waterfront)parts.push('WaterfrontYN eq true');if(f.garage)parts.push('GarageSpaces gt 0');
  const subtype:Record<string,string>={HOUSE:'Single Family Residence',CONDO:'Condominium',TOWNHOUSE:'Townhouse',VILLA:'Villa'};if(f.propertyType&&subtype[f.propertyType])parts.push(`PropertySubType eq ${quote(subtype[f.propertyType])}`);
  if(f.type==='RENT')parts.push("PropertyType eq 'Residential Lease'");
  if(f.type==='SALE')parts.push("PropertyType eq 'Residential'");

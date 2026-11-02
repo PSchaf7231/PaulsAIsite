@@ -112,6 +112,8 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
 .madison-panel{width:min(300px,calc(100vw - 24px));max-height:min(480px,65dvh)}
 .madison-panel .madison-video{height:100px}
 .madison-panel .madison-video-idle img{height:84px;width:72px}
+.madison-panel .madison-video-idle img{object-fit:contain;object-position:center;background:#173c50}
+.madison-panel .madison-video video{object-fit:contain;background:#081422}
 .madison-panel .madison-video-idle span{font-size:14px}
 .madison-panel .pax-transcript{max-height:130px}
 .madison-panel .madison-start-notice{font-size:11px;line-height:1.5;color:#c1d3e5;margin:0}

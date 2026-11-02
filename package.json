@@ -26,6 +26,7 @@
     "@ai-sdk/google": "^4.0.109",
     "@ai-sdk/openai": "^4.0.104",
     "@ai-sdk/xai": "^5.0.35",
+    "@anam-ai/js-sdk": "^4.29.1",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "ai": "^7.0.156",

@@ -4,13 +4,13 @@ import type { PaxState } from "../../lib/pax";
 import { paxSystemPrompt } from "./prompt";
 import { buyerPaxTools } from "./tools";
 import { dispatchQueued } from "./notifications";
-export async function streamPax(state:PaxState,onText:(text:string)=>void,signal:AbortSignal,checkpoint:()=>Promise<void>=async()=>{}){
+export async function streamPax(state:PaxState,onText:(text:string)=>void,signal:AbortSignal,checkpoint:()=>Promise<void>=async()=>{},persona?:"madison"){
  if(process.env.PAX_TEST_MODE==="1"){
   if(process.env.NODE_ENV==="production"||process.env.PAX_STORAGE!=="local")throw new Error("Test mode is restricted to local development storage.");
   const {testReply}=await import("./test-reply");
   return testReply(state,onText);
  }
- const agent=createPaxAgent(state,createPaxModel(),checkpoint);
+ const agent=createPaxAgent(state,createPaxModel(),checkpoint,persona);
  const result=await agent.stream({messages:state.messages.slice(-40).map(m=>({role:m.role,content:m.text})),abortSignal:signal,timeout:60000});
  let text="";
  for await(const part of result.fullStream){
@@ -21,9 +21,9 @@ export async function streamPax(state:PaxState,onText:(text:string)=>void,signal
  return text;
 }
 
-export function createPaxAgent(state:PaxState,model:LanguageModel,checkpoint:()=>Promise<void>=async()=>{}){
+export function createPaxAgent(state:PaxState,model:LanguageModel,checkpoint:()=>Promise<void>=async()=>{},persona?:"madison"){
  return new ToolLoopAgent({
-  model,instructions:paxSystemPrompt(state),tools:buyerPaxTools(state,async()=>{await checkpoint();await dispatchQueued(state,checkpoint);await checkpoint();}),
+  model,instructions:paxSystemPrompt(state)+(persona==="madison"?"\nVOICE PRESENTATION: You are speaking as Madison, an AI assistant powered by Pax. Use this identity if asked. Keep replies brief and natural to speak, with no markdown. All Pax buyer tools, consent, grounding, and property-follow-up rules still apply.":""),tools:buyerPaxTools(state,async()=>{await checkpoint();await dispatchQueued(state,checkpoint);await checkpoint();}),
   onError:()=>{},onStepFinish:async()=>{await checkpoint();},stopWhen:isStepCount(5),toolCallConcurrency:1,maxOutputTokens:700,maxRetries:1,
  });
 }

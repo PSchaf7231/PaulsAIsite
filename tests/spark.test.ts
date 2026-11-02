@@ -12,7 +12,7 @@ it('maps actual fields, address/MLS slugs, office and timestamps without invente
  for(const patch of [{InternetEntireListingDisplayYN:false},{InternetAddressDisplayYN:false},{ListOfficeName:''},{StandardStatus:'Closed'},{CountyOrParish:'Broward'},{ModificationTimestamp:'bad'}])expect(mapSpark({...record,...patch},'now')).toBeNull();
 });
 it('keeps unknown measurements unknown and separates rentals from sale records',()=>{
- const l=mapSpark({...record,PropertyType:'Residential Lease',ListPrice:2500,LivingArea:undefined},'now')!;expect(l.type).toBe('RENT');expect(l.missingFields).toContain('sqft');expect(sparkFilter({type:'RENT',maxPrice:3500})).toContain("Residential Lease");expect(sparkFilter({type:'SALE'})).not.toContain('500000');expect(sparkFilter({city:"O'Brien",mustHaves:['private pool']})).toContain("'O''Brien'");expect(sparkFilter({mustHaves:['private pool']})).toContain('PoolPrivateYN eq true');
+ const l=mapSpark({...record,PropertyType:'Residential Lease',ListPrice:3500,LivingArea:undefined},'now')!;expect(l.type).toBe('RENT');expect(l.missingFields).toContain('sqft');expect(sparkFilter({type:'RENT',maxPrice:3500})).toContain("Residential Lease");expect(sparkFilter({type:'SALE'})).not.toContain('500000');expect(sparkFilter({city:"O'Brien",mustHaves:['private pool']})).toContain("'O''Brien'");expect(sparkFilter({mustHaves:['private pool']})).toContain('PoolPrivateYN eq true');
 });
 it('uses the server bearer header, expands Media and follows even a short next page',async()=>{
  vi.stubEnv('SPARK_ACCESS_TOKEN','test-primary');const next='https://replication.sparkapi.com/Version/3/Reso/OData/Property?$skip=1';
@@ -25,7 +25,7 @@ it('never sends a bearer token to an off-origin pagination URL',async()=>{
 it('does not mask zero matches or failed live requests with sample records',async()=>{
  vi.stubEnv('SPARK_ACCESS_TOKEN','test-zero');vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({value:[]})));expect(await searchInventory()).toMatchObject({mode:'live',listings:[]});
  vi.stubEnv('SPARK_ACCESS_TOKEN','test-error');vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('',{status:401})));expect(await searchInventory()).toMatchObject({mode:'unavailable',listings:[]});
- vi.stubEnv('SPARK_ACCESS_TOKEN','');vi.stubEnv('SPARK_API_TOKEN','');expect((await searchInventory()).listings).toHaveLength(5);
+ vi.stubEnv('SPARK_ACCESS_TOKEN','');vi.stubEnv('SPARK_API_TOKEN','');expect((await searchInventory()).listings).toHaveLength(3);
 });
 it('shares filtering between the public inventory function and Pax',async()=>{
  vi.stubEnv('SPARK_ACCESS_TOKEN','test-shared');vi.stubGlobal('fetch',vi.fn().mockImplementation(()=>Promise.resolve(Response.json({value:[record]}))));
@@ -48,5 +48,12 @@ it('sorts at the provider before limiting results and caps card photos while kee
 it('keeps commercial leases out of residential monthly-rent results',()=>{
  expect(sparkFilter({type:'RENT'})).toContain("PropertyType eq 'Residential Lease'");
  expect(sparkFilter({type:'RENT'})).not.toContain('Commercial Lease');
- expect(mapSpark({...record,PropertyType:'Commercial Lease',ListPrice:35},'2026-11-02T00:00:00Z')?.type).toBe('COMMERCIAL');
+ expect(mapSpark({...record,PropertyType:'Commercial Lease',ListPrice:35},'2026-11-02T00:00:00Z')).toBeNull();
+});
+
+it('excludes commercial and below-floor rentals from every feed including direct lookup',()=>{
+ for(const PropertyType of ['Commercial Sale','Commercial Lease'])expect(mapSpark({...record,PropertyType},'now')).toBeNull();
+ expect(mapSpark({...record,PropertyType:'Residential Lease',ListPrice:3499},'now')).toBeNull();
+ expect(mapSpark({...record,PropertyType:'Residential Lease',ListPrice:3500},'now')?.price).toBe(3500);
+ expect(sparkFilter()).toContain("ListPrice ge 3500");
 });

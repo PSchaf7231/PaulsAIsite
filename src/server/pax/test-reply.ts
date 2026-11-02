@@ -22,7 +22,7 @@ export async function testReply(state:PaxState,onText:(text:string)=>void){
  else if(lower==='find a home'||/^i[’']m buying/.test(lower)){reply="Happy to help. What’s one must-have for your next home?";}
  else if(/number\s+\d+/.test(lower)){const result=resultDetails(state,Number(lower.match(/number\s+(\d+)/)![1]));reply=result.listing?`Number ${result.number} is ${result.listing.title}, a fictional sample in ${result.listing.city} listed at $${result.listing.price.toLocaleString('en-US')}. ${result.listing.description}`:result.error;}
  else if(lower.includes('show me more')){const result=moreResults(state);reply=result.message;}
- else if(lower.includes('just show me')){reviseCriteria(state,{},[],[],Object.keys(state.preferences));await queryInventory(state);reply="Here are all five fictional samples to explore. Which catches your eye?";}
+ else if(lower.includes('just show me')){reviseCriteria(state,{},[],[],Object.keys(state.preferences));await queryInventory(state);reply="Here are the fictional sample homes to explore. Which catches your eye?";}
  else if(lower.includes('123 palm way')){recordSeller(state,{address:'123 Palm Way, Delray Beach',timeline:'60 days',reason:'downsizing',alsoBuying:true},text);reply="I’ve noted the address, your 60-day timing, and that you’re downsizing and also buying. Paul can review recent comparable sales and condition with you. Want a free local pricing review by email?";}
  else if(lower.includes("3 beds")&&lower.includes("boynton")){
   reviseCriteria(state,{areas:["Delray Beach","Boynton Beach"],maxPrice:650000,beds:3,baths:2,type:"SALE",mustHaves:["pool","no HOA"],timeline:"60 days",movingReason:"closer to work",notes:"Buyer wants to shorten the commute."});await queryInventory(state);

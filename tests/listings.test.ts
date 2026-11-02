@@ -8,14 +8,14 @@ describe("Property browsing",()=>{
   expect(filterListings(listings,{city:"Delray Beach",maxPrice:584999})).toHaveLength(0);
  });
  it("separates monthly rentals from sale inventory",()=>{
-  const rentals=filterListings(listings,{type:"RENT"});
-  expect(rentals).toHaveLength(1);expect(listingPrice(rentals[0])).toBe("$3,400 / month");
+  const rentals=filterListings([...listings,{...listings[3],price:3500}],{type:"RENT"});
+  expect(rentals).toHaveLength(1);expect(listingPrice(rentals[0])).toBe("$3,500 / month");
   expect(filterListings(listings,{type:"SALE"})).toHaveLength(3);
  });
  it("excludes inactive listings and does not mutate the source",()=>{
   const source=[{...listings[0],status:"SOLD"},...listings.slice(1)];
   const before=JSON.stringify(source);const result=filterListings(source,{sort:"price-desc"});
-  expect(result).toHaveLength(4);expect(result[0].price).toBe(925000);expect(JSON.stringify(source)).toBe(before);
+  expect(result).toHaveLength(2);expect(result[0].price).toBe(925000);expect(JSON.stringify(source)).toBe(before);
  });
  it("returns no matches for incompatible filters",()=>{expect(filterListings(listings,{type:"COMMERCIAL",beds:3})).toEqual([])});
  it("has five distinct, explicitly fictional samples with valid map coordinates",()=>{

@@ -1,25 +1,25 @@
-import { test,expect } from '@playwright/test';
-test('Pax stays over the current home, preserves scroll and conversation across pages',async({page,isMobile})=>{
- await page.goto('/listings/boynton-poolside');
- await page.evaluate(()=>window.scrollTo(0,300));
- const position=await page.evaluate(()=>window.scrollY);
- await page.getByRole('navigation',{name:'Ask Pax about this home',exact:true}).getByRole('button',{name:'Ask Pax about this home',exact:true}).click();
- const panel=page.getByRole('dialog',{name:'Ask Pax'});
- await expect(panel).toBeVisible();await expect(panel.getByText('Viewing: Your own poolside retreat')).toBeVisible();
- await expect(page).toHaveURL(/\/listings\/boynton-poolside$/);
- const box=await panel.boundingBox();expect(box).not.toBeNull();if(isMobile){expect(box!.y).toBeGreaterThan(0);}else{expect(box!.x).toBeGreaterThan(0);}
- await expect(panel.getByText('Automated test mode · no live AI or delivery')).toBeVisible();
- await panel.getByRole('checkbox').check();await panel.getByLabel('Message Pax',{exact:true}).fill('Find a home in Delray');await panel.getByRole('button',{name:'Send message'}).click();
- await expect(panel.getByLabel('Message Pax',{exact:true})).toBeEnabled();
- const state=await (await page.request.get('/api/pax/session')).json();expect(state.session.currentPage.listingSlug).toBe('boynton-poolside');
- await panel.getByRole('button',{name:'Close Pax'}).click();await expect(panel).not.toBeVisible();expect(await page.evaluate(()=>window.scrollY)).toBe(position);
- await page.getByRole('navigation',{name:'Ask Pax about this home',exact:true}).getByRole('button',{name:'Ask Pax about this home',exact:true}).click();await expect(panel.locator('.pax-message.user').filter({hasText:'Find a home in Delray'})).toBeVisible();
- await panel.getByTestId('listing-card').click();await expect(page).toHaveURL(/\/listings\/delray-courtyard$/);await expect(panel).not.toBeVisible();
- await page.getByRole('navigation',{name:'Ask Pax about this home',exact:true}).getByRole('button',{name:'Ask Pax about this home',exact:true}).click();await expect(panel.getByText('Viewing: Courtyard days, coastal evenings')).toBeVisible();await expect(panel.locator('.pax-message.user').filter({hasText:'Find a home in Delray'})).toBeVisible();
- await panel.getByLabel('Message Pax',{exact:true}).fill('Keep this draft');await page.keyboard.press('Escape');await expect(panel).not.toBeVisible();await expect(page.getByRole('navigation',{name:'Ask Pax about this home',exact:true}).getByRole('button',{name:'Ask Pax about this home',exact:true})).toBeFocused();
- await page.getByRole('navigation',{name:'Ask Pax about this home',exact:true}).getByRole('button',{name:'Ask Pax about this home',exact:true}).click();await expect(panel.getByLabel('Message Pax',{exact:true})).toHaveValue('Keep this draft');
+import {test,expect} from '@playwright/test';
+test('Madison stays nonmodal, draggable and preserves conversation across navigation and minimization',async({page})=>{
+ let avatarRequests=0;await page.route('**/api/pax/avatar',route=>{avatarRequests++;return route.fulfill({status:503,json:{error:'Video is not configured in this test.'}});});
+ await page.goto('/');await page.getByRole('button',{name:'Talk to Madison — powered by Pax',exact:true}).click();
+ const panel=page.getByRole('dialog',{name:'Ask Pax'});await expect(panel).toBeVisible();await expect(panel).toHaveAttribute('aria-modal','false');
+ expect(avatarRequests).toBe(0);await expect(panel.getByRole('button',{name:'Start video chat',exact:true})).toBeDisabled();
+ await panel.getByRole('checkbox',{name:/I agree to save this chat/}).check();
+ await panel.getByLabel('Message Pax',{exact:true}).fill('Find a home in Delray');await panel.getByRole('button',{name:'Send message'}).click();
+ await expect(panel.locator('.pax-message.user').filter({hasText:'Find a home in Delray'})).toBeVisible();
+ const before=await panel.boundingBox();await panel.getByRole('button',{name:'Move Madison window'}).focus();await page.keyboard.press('ArrowUp');const moved=await panel.boundingBox();expect(moved!.y).toBeLessThan(before!.y);
+ await panel.getByRole('button',{name:'Minimize Madison'}).click();await expect(panel).toHaveClass(/is-minimized/);
+ await page.locator('footer a[href="/communities"]').click();await expect(page).toHaveURL(/\/communities$/);await expect(panel).toBeVisible();await expect(panel).toHaveClass(/is-minimized/);
+ await panel.getByRole('button',{name:'Restore Madison conversation'}).click();await expect(panel.locator('.pax-message.user').filter({hasText:'Find a home in Delray'})).toBeVisible();
+ await panel.getByLabel('Message Pax',{exact:true}).fill('Keep this draft');await panel.getByRole('button',{name:'Close Pax'}).click();await expect(panel).not.toBeVisible();
+ await page.getByRole('button',{name:'Talk to Madison — powered by Pax',exact:true}).click();await expect(panel.getByLabel('Message Pax',{exact:true})).toHaveValue('Keep this draft');expect(avatarRequests).toBe(0);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
-test('homepage has only a small neighborhood link and chat buttons keep its URL',async({page})=>{
- await page.goto('/');await expect(page.getByRole('heading',{name:'Find your kind of Florida.'})).toHaveCount(0);await expect(page.getByRole('link',{name:'Neighborhood guides'})).toHaveCount(1);
- await page.locator('.digital-suggestions').getByRole('button',{name:'Oceanfront in Palm Beach ↗',exact:true}).click();await expect(page.getByRole('dialog')).toBeVisible();await expect(page).toHaveURL('http://localhost:3000/');
+test('video requires explicit consent and handles unconfigured service without starting audio',async({page})=>{
+ await page.route('**/api/pax/avatar',route=>route.fulfill({status:503,json:{error:'Video is not configured in this test.'}}));
+ await page.goto('/');await page.locator('.madison-hero-button').click();const panel=page.getByRole('dialog',{name:'Ask Pax'});
+ await panel.getByRole('checkbox',{name:/Allow Anam/}).check();await panel.getByRole('button',{name:'Start video chat',exact:true}).click();
+ await expect(panel.getByRole('alert')).toContainText('Video is not configured');await expect(panel.getByRole('button',{name:'Start video chat',exact:true})).toBeEnabled();
+ expect(await panel.locator('video').evaluate((v:HTMLVideoElement)=>v.srcObject===null)).toBe(true);
+ const rejected=await page.request.post('/api/pax/avatar',{data:{consent:true},headers:{Origin:'https://unrelated.example'}});expect(rejected.status()).toBe(403);
 });

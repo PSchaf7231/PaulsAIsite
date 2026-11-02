@@ -1,5 +1,5 @@
 import {test,expect,type Page} from "@playwright/test";
-async function begin(page:Page){await page.goto('/pax');await expect(page.getByText('Automated test mode · no live AI or delivery')).toBeVisible();await page.getByRole('checkbox').check();}
+async function begin(page:Page){await page.goto('/pax');await expect(page.getByText('Automated test mode · no live AI or delivery')).toBeVisible();await page.getByRole('checkbox',{name:/I agree to save this chat/}).check();}
 async function say(page:Page,text:string){await page.getByLabel('Message Pax',{exact:true}).fill(text);await page.getByRole('button',{name:'Send message',exact:true}).click();await expect(page.getByLabel('Message Pax',{exact:true})).toBeEnabled();}
 async function session(page:Page){return (await (await page.request.get('/api/pax/session')).json()).session;}
 test('Pax searches samples, syncs map, saves freely, and resumes after reload',async({page})=>{
@@ -52,8 +52,8 @@ test('a slow session lookup does not clear the visitor’s chat consent',async({
  let release!:()=>void,started!:()=>void;
  const gate=new Promise<void>(resolve=>{release=resolve;});const requested=new Promise<void>(resolve=>{started=resolve;});
  await page.route('**/api/pax/session',async route=>{started();await gate;await route.continue();});
- await page.goto('/pax');await requested;await page.getByRole('checkbox').check();release();
+ await page.goto('/pax');await requested;await page.getByRole('checkbox',{name:/I agree to save this chat/}).check();release();
  await expect(page.getByText('Automated test mode · no live AI or delivery')).toBeVisible();
- await expect(page.getByRole('checkbox')).toBeChecked();
+ await expect(page.getByRole('checkbox',{name:/I agree to save this chat/})).toBeChecked();
  await say(page,'Find a home in Delray under 600k');await expect(page.getByRole('dialog').getByTestId('listing-card')).toHaveCount(1);
 });

@@ -12,7 +12,7 @@ const number=(v:unknown)=>typeof v==='number'&&Number.isFinite(v)?v:typeof v==='
 const words=(v:string)=>v.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const quote=(v:string)=>`'${v.replace(/'/g,"''")}'`;
 export function sparkFilter(f:ListingFilters={},listingId?:string){
- const parts=["StandardStatus eq 'Active'","CountyOrParish eq 'Palm Beach'"];
+ const parts=["StandardStatus eq 'Active'","CountyOrParish eq 'Palm Beach'", "(PropertyType eq 'Residential' or (PropertyType eq 'Residential Lease' and ListPrice ge 3500))"];
  if(listingId)parts.push(`(ListingId eq ${quote(listingId.toUpperCase())} or ListingId eq ${quote(listingId.toLowerCase())})`);
  const cities=f.areas?.length?f.areas:f.city?[f.city]:[];
  if(cities.length)parts.push(`(${cities.map(city=>`City eq ${quote(city)}`).join(' or ')})`);
@@ -31,6 +31,7 @@ export function mapSpark(r:Record<string,unknown>,checkedAt:string):Listing|null
  const city=text(r.City),zip=text(r.PostalCode),modified=text(r.ModificationTimestamp);
  if(!id||!key||!office||price===null||!address||!city||!/^\d{5}(?:-\d{4})?$/.test(zip)||!Number.isFinite(Date.parse(modified)))return null;
  const category=text(r.PropertyType),subtype=text(r.PropertySubType);const type=/commercial/i.test(category)?'COMMERCIAL':/lease/i.test(category)?'RENT':'SALE';
+ if(type==='COMMERCIAL'||(type==='RENT'&&price<3500)||!/^Residential(?: Lease)?$/i.test(category))return null;
  const media=Array.isArray(r.Media)?r.Media as Record<string,unknown>[]:[];
  const photos=media.filter(m=>{try{const url=new URL(text(m.MediaURL));return url.protocol==='https:'&&!url.username&&!url.password&&(!m.MediaCategory||/photo/i.test(text(m.MediaCategory)));}catch{return false;}}).sort((a,b)=>(number(a.Order)||0)-(number(b.Order)||0)).slice(0,40).map((m,i)=>({url:text(m.MediaURL),alt:`${address} — MLS photo ${i+1}`,position:i}));
  const features=['InteriorFeatures','ExteriorFeatures','ParkingFeatures','PoolFeatures','WaterfrontFeatures','CommunityFeatures'].flatMap(field=>Array.isArray(r[field])?(r[field] as unknown[]).map(text):text(r[field])?[text(r[field])]:[]).filter(Boolean).map(englishLabel);

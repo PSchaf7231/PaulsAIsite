@@ -39,7 +39,7 @@ export function propose(state:PaxState,input:{kind:ActionKind;contact:Contact;pr
  // A model may only propose contact information actually supplied in this conversation.
  if(contact.email&&contact.email!==state.lead?.email&&!spoken.toLowerCase().includes(contact.email))return {error:"Do not invent contact information. Ask for their preferred email or phone first."};
  if(contact.phone&&contact.phone!==state.lead?.phone&&!spoken.replace(/\D/g,"").includes(contact.phone.replace(/^\+1/,"").replace(/\D/g,"")))return {error:"Phone was not provided by the visitor."};
- if(input.kind==="SHOWING"&&(!input.listingSlug||sessionListings(state).find(l=>l.slug===input.listingSlug)?.isSample!==false))return {error:"The five sample homes cannot be toured. Offer a call with Paul about comparable real homes instead."};
+ if(input.kind==="SHOWING"&&(!input.listingSlug||sessionListings(state).find(l=>l.slug===input.listingSlug)?.isSample!==false))return {error:"The sample homes cannot be toured. Offer a call with Paul about comparable real homes instead."};
  if((input.kind==="CALL"||input.kind==="SHOWING")&&!input.preferredTime)return {error:"Ask for one preferred day/time with timezone. This is a request, not a confirmed booking."};
  const turns=state.messages.filter(m=>m.role==="user").length;
  if(turns-state.declinedAtTurn<3)return {error:"They recently declined. Keep helping without another contact request yet."};

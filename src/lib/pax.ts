@@ -1,5 +1,5 @@
 import samples from "./sample-listings.json";
-import type { Listing } from "./listings";
+import {eligibleListing,type Listing } from "./listings";
 export type Preference = { area?: string; areas?:string[]; baths?:number; propertyType?:"HOUSE"|"CONDO"|"TOWNHOUSE"|"VILLA"|"MULTIFAMILY"|"LAND"|"OTHER"; mustHaves?:string[]; dealBreakers?:string[]; movingReason?:string; notes?:string; minPrice?: number; maxPrice?: number; beds?: number; type?: "SALE"|"RENT"|"COMMERCIAL"; timeline?: string; intent?: "BUYER"|"SELLER"|"RENTER"|"BROWSING"; preApproved?: boolean };
 export type ChatMessage = { id: string; role: "user"|"assistant"; text: string; at: string };
 export type Contact = { name?: string; email?: string; phone?: string };
@@ -27,5 +27,5 @@ export type PublicPaxState=Omit<PaxState,"id"|"notifications"|"processedTurns"|"
 export function publicPaxState(state:PaxState):PublicPaxState {
  const {id,notifications,processedTurns,lastAskTurn,declinedAtTurn,...visible}=state;
  void id;void notifications;void processedTurns;void lastAskTurn;void declinedAtTurn;
- return {...visible,listingRecords:state.listingRecords||(state.feedMode==="live"||state.feedMode==="unavailable"?[]:samples as Listing[])};
+ return {...visible,listingRecords:(state.listingRecords||(state.feedMode==="live"||state.feedMode==="unavailable"?[]:samples as Listing[])).filter(eligibleListing)};
 }

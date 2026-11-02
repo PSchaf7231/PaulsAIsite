@@ -17,6 +17,7 @@ export default function DigitalSearch(){
   </form>
   <div className="digital-suggestions"><span>Start somewhere</span>{['Oceanfront in Palm Beach','A private pool in Boca Raton','I’m thinking of selling'].map(q=><button key={q} onClick={()=>open(q)}>{q} ↗</button>)}</div>
   <div className="digital-search-bottom"><Link href="/listings">Browse homes yourself ↗</Link><span>Explore at your own pace.</span></div>
+  <button type="button" className="madison-hero-button" onClick={()=>open()}>◉ Talk to Madison <span>Video chat · powered by Pax</span></button>
   <details className="digital-filters"><summary>Prefer filters? Search by city, price & beds</summary><HomeSearch/></details>
  </div>;
 }

@@ -13,7 +13,7 @@ import { publicPaxState } from "@/lib/pax";
 import { flushNotifications,dispatchQueued } from "@/server/pax/notifications";
 export const runtime="nodejs";
 export async function POST(req:Request){try{
- const input=z.object({text:z.string().trim().min(1).max(2000),turnId:z.string().uuid(),consent:z.literal(true),listingSlug:z.string().max(240).optional(),area:z.string().max(100).optional()}).strict().safeParse(await readBody(req));
+ const input=z.object({text:z.string().trim().min(1).max(2000),turnId:z.string().uuid(),consent:z.literal(true),persona:z.literal("madison").optional(),listingSlug:z.string().max(240).optional(),area:z.string().max(100).optional()}).strict().safeParse(await readBody(req));
  if(!input.success)throw new RequestError("Send a short message and acknowledge the chat privacy notice.");
  if(!paxConfigured()&&process.env.PAX_TEST_MODE!=="1")return Response.json({error:"Pax’s AI connection is not configured yet. You can browse listings or contact Paul directly."},{status:503});
  if(process.env.PAX_TEST_MODE==="1"&&(process.env.NODE_ENV==="production"||process.env.PAX_STORAGE!=="local"))throw new RequestError("Test mode is not available here.",503);
@@ -30,7 +30,7 @@ export async function POST(req:Request){try{
     await checkpoint();
     await dispatchQueued(state,checkpoint);
     await checkpoint();
-    const text=await streamPax(state,chunk=>send({type:"text",text:chunk}),AbortSignal.any([req.signal,AbortSignal.timeout(65000)]),checkpoint);
+    const text=await streamPax(state,chunk=>send({type:"text",text:chunk}),AbortSignal.any([req.signal,AbortSignal.timeout(65000)]),checkpoint,input.data.persona);
     finishTurn(state,input.data.turnId,text);
    });
    send({type:"done",session:publicPaxState(state)});

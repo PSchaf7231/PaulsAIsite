@@ -23,7 +23,7 @@ describe('Pax search controls',()=>{
  });
  it('resolves visible numbers only, preserves order and limits comparisons to three',()=>{
   const s=newState('a');showMatches(s);const order=[...s.results];expect(resultDetails(s,3).listing?.slug).toBe(order[2]);expect(resultDetails(s,6)).toHaveProperty('error');expect(s.results).toEqual(order);
-  for(const l of sampleListings.slice(0,3))compareHome(s,l.slug);expect(compareHome(s,sampleListings[3].slug)).toHaveProperty('error');expect(compareHome(s,'fake')).toHaveProperty('error');compareHome(s,sampleListings[0].slug,true);expect(compareHome(s,sampleListings[3].slug).compared).toHaveLength(3);
+  for(const l of sampleListings.slice(0,3))compareHome(s,l.slug);expect(compareHome(s,sampleListings[3].slug)).toHaveProperty('error');expect(compareHome(s,'fake')).toHaveProperty('error');compareHome(s,sampleListings[0].slug,true);expect(compareHome(s,sampleListings[0].slug).compared).toHaveLength(3);
  });
  it('does not imply a shared or unspecified pool is private',()=>{
   const l={...sampleListings[0],features:['Community pool']};expect(matchCriteria({mustHaves:['private pool']},[l])[0].exact).toBe(false);
@@ -31,6 +31,6 @@ describe('Pax search controls',()=>{
  it('answers a greeting warmly and asks one must-have question before a broad search',async()=>{
   const s=newState('a');s.messages.push({id:'1',role:'user',text:'hello',at:'now'});expect(await testReply(s,()=>{})).toContain('Glad you stopped by');expect(s.results).toHaveLength(0);finishTurn(s,'1','Hi!');expect(s.results).toHaveLength(0);
   s.messages.push({id:'2',role:'user',text:'Find a home',at:'now'});expect(await testReply(s,()=>{})).toContain('one must-have');expect(s.results).toHaveLength(0);
-  s.messages.push({id:'3',role:'user',text:'just show me homes',at:'now'});await testReply(s,()=>{});expect(s.results).toHaveLength(5);
+  s.messages.push({id:'3',role:'user',text:'just show me homes',at:'now'});await testReply(s,()=>{});expect(s.results).toHaveLength(3);
  });
 });

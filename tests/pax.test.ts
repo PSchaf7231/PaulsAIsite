@@ -37,7 +37,7 @@ describe("Pax conversion boundaries",()=>{
  it("declining never captures a lead and enforces a cooldown",()=>{
   const s=contactState();const a=propose(s,{kind:"CONTACT",contact:{email:"test@example.com"}});if("error" in a)throw Error(a.error);
   confirmAction(s,a.id,false);expect(s.lead).toBeUndefined();expect(propose(s,{kind:"SEARCH",contact:{email:"test@example.com"}})).toHaveProperty("error");
-  expect(search(s,{}).listings).toHaveLength(5);
+  expect(search(s,{}).listings).toHaveLength(3);
  });
  it("separates requested calls from actual appointments and stores sample-only search criteria",()=>{
   const s=contactState();s.preferences={area:"Delray Beach",timeline:"60 days",maxPrice:600000};

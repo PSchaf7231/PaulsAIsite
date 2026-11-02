@@ -12,6 +12,6 @@ it('shows six highest-priced active real single-family sales above the inclusive
 });
 it('fills lease slots with the next highest monthly rents and never mixes in sale prices',()=>{
  const rentals=Array.from({length:8},(_,i)=>({...sampleListings[3],id:String(i),isSample:false,price:3000+i*1000}));
- expect(featuredHomes([...rentals,{...sampleListings[0],isSample:false,price:50000000}],'RENT').map(l=>l.id)).toEqual(['7','6','5','4','3','2']);expect(featuredHomes(rentals.slice(0,2),'RENT')).toHaveLength(2);
+ expect(featuredHomes([...rentals,{...sampleListings[0],isSample:false,price:50000000}],'RENT').map(l=>l.id)).toEqual(['7','6','5','4','3','2']);expect(featuredHomes(rentals.slice(0,2),'RENT')).toHaveLength(1);
 });
 it('defaults public canonical and social URLs to the live domain when public configuration is absent',()=>{vi.stubEnv('NEXT_PUBLIC_SITE_URL','');vi.stubEnv('SITE_URL','http://localhost:3000');expect(siteUrl()).toBe('https://www.pbrealestatepros.com');const metadata=pageMetadata('Home','Homes','/');expect(metadata.alternates?.canonical).toBe('https://www.pbrealestatepros.com/');expect(JSON.stringify(metadata.openGraph)).not.toContain('localhost');});

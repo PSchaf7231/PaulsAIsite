@@ -4,7 +4,7 @@ import { filterListings,type ListingFilters,type Listing } from '../../lib/listi
 export type InventoryResult={listings:Listing[];mode:'live'|'sample'|'unavailable';checkedAt:string;hasMore:boolean};
 export async function searchInventory(filters:ListingFilters={},options:{limit?:number;lean?:boolean}={}):Promise<InventoryResult>{
  if(!sparkConfigured())return {listings:filterListings(sampleListings,filters),mode:'sample',checkedAt:new Date().toISOString(),hasMore:false};
- try{const result=await fetchSpark(filters,options);return {...result,listings:filterListings(result.listings,filters),mode:'live'};}
+ try{const result=await fetchSpark(filters,{limit:options.limit??100,lean:options.lean});return {...result,listings:filterListings(result.listings,filters),mode:'live'};}
  catch{return {listings:[],mode:'unavailable',checkedAt:new Date().toISOString(),hasMore:false};}
 }
 export async function getListing(slug:string):Promise<Listing|null>{

@@ -6,22 +6,26 @@ type Provider = 'anthropic' | 'google' | 'xai';
 const keyNames = { anthropic: 'ANTHROPIC_API_KEY', google: 'GEMINI_API_KEY', xai: 'XAI_API_KEY' } as const;
 
 // Server-only consumer: never return this configuration (which contains a key) to clients.
-export function paxProviderConfig(env: Record<string, string | undefined> = process.env) {
-  const provider = (env.AI_PROVIDER?.trim().toLowerCase() || 'anthropic') as Provider;
-  if (!Object.hasOwn(keyNames, provider)) throw new Error('AI_PROVIDER must be anthropic, google, or xai.');
-  const model = env.AI_MODEL?.trim() || (provider === 'anthropic' ? 'claude-haiku-5-5' : '');
-  if (!model) throw new Error('Set AI_MODEL for the selected Pax provider.');
+// Madison (voice avatar) may use her own brain via MADISON_AI_PROVIDER / MADISON_AI_MODEL; otherwise she shares Pax's.
+export function paxProviderConfig(env: Record<string, string | undefined> = process.env, persona?: 'madison') {
+  const own = persona === 'madison' && !!env.MADISON_AI_PROVIDER?.trim();
+  const providerVar = own ? 'MADISON_AI_PROVIDER' : 'AI_PROVIDER';
+  const modelVar = own ? 'MADISON_AI_MODEL' : 'AI_MODEL';
+  const provider = (env[providerVar]?.trim().toLowerCase() || 'anthropic') as Provider;
+  if (!Object.hasOwn(keyNames, provider)) throw new Error(`${providerVar} must be anthropic, google, or xai.`);
+  const model = env[modelVar]?.trim() || (provider === 'anthropic' ? 'claude-haiku-5-5' : '');
+  if (!model) throw new Error(`Set ${modelVar} for the selected Pax provider.`);
   const apiKey = env[keyNames[provider]]?.trim();
   if (!apiKey) throw new Error(`Pax is not configured. Set ${keyNames[provider]}.`);
   return { provider, model, apiKey };
 }
 
-export function paxConfigured() {
-  try { paxProviderConfig(); return true; } catch { return false; }
+export function paxConfigured(persona?: 'madison') {
+  try { paxProviderConfig(process.env, persona); return true; } catch { return false; }
 }
 
-export function createPaxModel() {
-  const { provider, model, apiKey } = paxProviderConfig();
+export function createPaxModel(persona?: 'madison') {
+  const { provider, model, apiKey } = paxProviderConfig(process.env, persona);
   switch (provider) {
     case 'anthropic': return createAnthropic({ apiKey })(model);
     case 'google': return createGoogle({ apiKey })(model);

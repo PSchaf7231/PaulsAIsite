@@ -10,7 +10,7 @@ export async function streamPax(state:PaxState,onText:(text:string)=>void,signal
   const {testReply}=await import("./test-reply");
   return testReply(state,onText);
  }
- const agent=createPaxAgent(state,createPaxModel(),checkpoint,persona);
+ const agent=createPaxAgent(state,createPaxModel(persona),checkpoint,persona);
  const result=await agent.stream({messages:state.messages.slice(-40).map(m=>({role:m.role,content:m.text})),abortSignal:signal,timeout:60000});
  let text="";
  for await(const part of result.fullStream){

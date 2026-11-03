@@ -7,7 +7,7 @@ import { adminConfigured,isAdmin } from '@/server/admin/auth';
 import { readSession } from '@/server/pax/store';
 import { suggestedTexts } from '@/server/pax/text-suggestions';
 export const dynamic='force-dynamic';
-export const metadata={title:'Private lead details',robots:{index:false,follow:false},referrer:'no-referrer' as const};
+export const metadata={title:'Private lead details',description:'Private Palm Beach Real Estate Pros lead details.',robots:{index:false,follow:false},referrer:'no-referrer' as const};
 export default async function LeadDetail({params}:{params:Promise<{id:string}>}){
  if(!await isAdmin())return <AdminLogin configured={adminConfigured()}/>;
  const {id}=await params;if(!/^[a-f0-9]{64}$/.test(id))notFound();const s=await readSession(id);if(!s?.lead)notFound();

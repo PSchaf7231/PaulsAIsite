@@ -3,7 +3,7 @@ import AdminLogin,{AdminLogout} from '@/components/admin-login';
 import { adminConfigured,isAdmin } from '@/server/admin/auth';
 import { listSessions } from '@/server/pax/store';
 export const dynamic='force-dynamic';
-export const metadata={title:'Private lead inbox',robots:{index:false,follow:false},referrer:'no-referrer' as const};
+export const metadata={title:'Private lead inbox',description:'Private Palm Beach Real Estate Pros lead-management page.',robots:{index:false,follow:false},referrer:'no-referrer' as const};
 export default async function LeadInbox(){
  if(!await isAdmin())return <AdminLogin configured={adminConfigured()}/>;
  const leads=(await listSessions()).filter(s=>s.lead).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { agent,siteUrl } from './config';
 import type { Listing } from './listings';
-export function indexingEnabled(){return process.env.SEO_INDEXING_ENABLED==='true';}
+export function indexingEnabled(){return true;}
 export function absoluteUrl(path:string){return new URL(path,siteUrl()).toString();}
 export function pageMetadata(title:string,description:string,path:string,options:{noindex?:boolean}={}):Metadata{
  const image=absoluteUrl(`/api/og?title=${encodeURIComponent(title.slice(0,100))}`);

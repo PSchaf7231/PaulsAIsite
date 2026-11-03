@@ -1,5 +1,5 @@
 export const MADISON_AVATAR_ID = '9d414187-9553-43b5-a83a-2c149e121703';
-export const MADISON_LLM_ID = '8dd3c05e-ce36-4b3e-bee3-495f522501aa';
+export const MADISON_LLM_ID = '81bb3cb6-5fdb-44e1-aed3-e953c3b6eadd';
 // Paul's Madison voice in Anam Lab: Lacey - Sunny Soul (Sonic 3.5). ANAM_VOICE_ID overrides.
 export const DEFAULT_MADISON_VOICE_ID = '8cc7b2d8-4fc0-11f1-84b0-52bacf74fa75';
 // Madison's published Anam Custom LLM uses Gemini directly for the live video conversation.

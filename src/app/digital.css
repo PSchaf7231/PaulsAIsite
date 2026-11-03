@@ -120,3 +120,21 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
 .madison-panel .madison-start-notice{font-size:11px;line-height:1.5;color:#c1d3e5;margin:0}
 .madison-panel.is-minimized{width:58px;height:58px;max-height:58px}
 .madison-panel.is-minimized .madison-video,.madison-panel.is-minimized .madison-video-idle img{width:58px;height:58px}
+/* Madison is a voice-first floating portrait, not a second text-chat window. */
+.madison-panel{width:min(280px,calc(100vw - 24px));max-height:none}
+.madison-panel .madison-video{height:300px}
+.madison-panel .madison-video video{object-fit:cover;background:#081422}
+.madison-panel .madison-video-idle{display:block;background:#173c50}
+.madison-panel .madison-video-idle img{width:100%;height:100%;border-radius:0;object-fit:cover;object-position:50% 18%;background:#173c50}
+.madison-panel .madison-video-idle span{position:absolute;left:0;right:0;bottom:0;max-width:none;padding:26px 12px 10px;background:linear-gradient(transparent,#071b2ee6);font-size:14px;text-align:center}
+.madison-panel .madison-body{padding:10px}
+.madison-panel .madison-start{gap:7px;text-align:center}
+.madison-panel .madison-start .btn{width:100%}
+.madison-panel .madison-start-notice{font-size:9px;line-height:1.35}
+.madison-panel .madison-video-controls{justify-content:center}
+.madison-panel .madison-video-controls .btn{flex:1;padding:8px 10px}
+.madison-panel .pax-error{margin-top:8px}
+@media(max-width:700px){
+ .madison-panel{width:min(220px,calc(100vw - 24px))}
+ .madison-panel .madison-video{height:235px}
+}

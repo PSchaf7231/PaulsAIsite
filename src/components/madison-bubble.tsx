@@ -1,6 +1,5 @@
 'use client';
 import {useCallback,useEffect,useRef,useState} from 'react';
-import Link from 'next/link';
 import type {AnamClient} from '@anam-ai/js-sdk';
 import type {PageAction} from '@/lib/pax';
 type Props={open:boolean;activation:number;onOpen:()=>void;onClose:()=>void;request?:{id:string;text:string};listingSlug?:string;area?:string;onPageAction:(action:PageAction)=>void};
@@ -44,7 +43,7 @@ export default function MadisonBubble(props:Props){
     {minimized&&<button className="madison-restore" onClick={expand} aria-label="Restore Madison conversation">✦<span className="sr-only">Microphone paused</span></button>}
    </div>
    <div className="madison-body" hidden={minimized}>
-    {status==='idle'?<div className="madison-start"><button className="btn small" onClick={()=>void start()}>Talk to Madison</button><p className="madison-start-notice">Uses your microphone and Anam voice processing. <Link href="/privacy">Privacy</Link></p></div>:<div className="madison-video-controls"><button className="btn small outline" disabled={status!=='connected'} onClick={()=>{if(muted)client.current?.unmuteInputAudio();else client.current?.muteInputAudio();setMuted(!muted);}}>{muted?'Unmute':'Mute'}</button><button className="btn small outline" onClick={stop}>End</button></div>}
+    {status==='idle'?<div className="madison-start"><button className="btn small" onClick={()=>void start()}>Talk to Madison</button></div>:<div className="madison-video-controls"><button className="btn small outline" disabled={status!=='connected'} onClick={()=>{if(muted)client.current?.unmuteInputAudio();else client.current?.muteInputAudio();setMuted(!muted);}}>{muted?'Unmute':'Mute'}</button><button className="btn small outline" onClick={stop}>End</button></div>}
     {error&&<p role="alert" className="pax-error">{error}</p>}
    </div>
   </aside>

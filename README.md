@@ -2,7 +2,7 @@
 
 Current launch setup: [VERCEL-LAUNCH-SETUP.md](VERCEL-LAUNCH-SETUP.md). This release adds Spark IDX with sample fallback, email-first buyer/seller capture, AI discovery and contextual listing detail tools. The older phase notes below describe the earlier sample-only setup.
 
-For **Paul Schafranick** · 561-255-7285 · paul@palmbeachrentalpros.com. Brokerage branding remains omitted. Local development only; nothing is deployed.
+For **Paul Schafranick** · 561-255-7285 · paul@pbrealestatepros.com. Brokerage branding remains omitted. Local development only; nothing is deployed.
 
 **Latest update:** [Manual texting, private lead pages, conversational saved searches and sample alerts](MANUAL-TEXTING-AND-SEARCHES.md). Twilio is off by default.
 

@@ -16,18 +16,17 @@ export default function LeadConversion({live=false}:{live?:boolean}){
  useEffect(()=>{const match=/^\/listings\/([^/]+)$/.exec(pathname);if(match)void track({kind:'view',slug:decodeURIComponent(match[1])});},[pathname]);
  async function submit(e:React.FormEvent<HTMLFormElement>){
   e.preventDefault();setBusy(true);setMessage('');const f=new FormData(e.currentTarget);
-  try{await activityReady();const r=await fetch('/api/pax/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.get('email'),purpose:'CONTACT',smsConsent:false,emailConsent:f.get('emailConsent')==='on'})});const body=await r.json();if(!r.ok)throw new Error(body.error);setMessage(body.message);setOpen(false);}
+  try{await activityReady();const r=await fetch('/api/pax/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.get('email'),purpose:'CONTACT',smsConsent:false,emailConsent:false})});const body=await r.json();if(!r.ok)throw new Error(body.error);setMessage(body.message);setOpen(false);}
   catch(e){setMessage(e instanceof Error?e.message:'Please try again.');}finally{setBusy(false);}
  }
  function dismiss(){setOpen(false);void track({kind:'dismiss'});}
- if(pathname.startsWith("/admin"))return null;
+ if(pathname.startsWith("/admin")||pathname==='/contact')return null;
  return <section className="lead-conversion" aria-label="Next steps with Pax">
   <div className="container"><p><strong>Pax · Your next move</strong> Want help finding real Palm Beach County homes?</p><button className="btn outline small" onClick={()=>setOpen(v=>!v)}>Ask Paul to follow up</button>
   {open&&<form className="lead-form" onSubmit={submit}><h2>Let’s make your next move easier.</h2><p>What email should Paul use? You can keep browsing without sharing anything else.</p>
    <label>Email<input name="email" type="email" autoComplete="email" required maxLength={254}/></label>
-   <label className="channel-consent"><input type="checkbox" name="emailConsent"/>Email my acknowledgment, confirmed-search matches.</label>
    <p className="pax-fine">Submitting saves your contact details and browsing history for Paul’s personal follow-up. <Link href="/privacy">Privacy</Link>. {!live&&"Fictional sample properties cannot be toured; "}all appointments require confirmation.</p>
-   <button className="btn" disabled={busy}>{busy?'Saving…':'Send my request'}</button> <button type="button" className="btn outline" onClick={dismiss}>Keep browsing</button>
+   <div className="lead-form-actions"><button className="btn" disabled={busy}>{busy?'Saving…':'Send my request'}</button><Link className="btn outline" href="/listings" onClick={dismiss}>Keep browsing</Link></div>
   </form>}{message&&<p role="status">{message}</p>}</div>
  </section>;
 }

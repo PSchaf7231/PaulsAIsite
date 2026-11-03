@@ -1,6 +1,6 @@
 # Palm Beach Real Estate Pros — agreed build plan
 
-Owner: Paul Schafranick · 561-255-7285 · paul@palmbeachrentalpros.com.
+Owner: Paul Schafranick · 561-255-7285 · paul@pbrealestatepros.com.
 Brokerage branding is intentionally omitted while Paul changes brokerages. Do not invent a license number, experience statistics, testimonials, or credentials.
 
 ## Stack

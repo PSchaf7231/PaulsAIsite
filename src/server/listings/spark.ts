@@ -5,7 +5,9 @@ import type { Listing,ListingFilters } from '../../lib/listings';
 import { englishLabel } from '../../lib/property-details';
 const DEFAULT_BASE='https://replication.sparkapi.com/Version/3/Reso/OData';
 export function sparkToken(){return process.env.SPARK_ACCESS_TOKEN||process.env.SPARK_API_TOKEN||'';}
-export function sparkConfigured(){return !!sparkToken();}
+// Temporarily disabled while formal BeachesMLS IDX approval is pending.
+// Keep the Vercel token in place so the approved feed can be restored without re-entering credentials.
+export function sparkConfigured(){return false;}
 
 const text=(v:unknown)=>typeof v==='string'?v.trim():'';
 const number=(v:unknown)=>typeof v==='number'&&Number.isFinite(v)?v:typeof v==='string'&&v.trim()&&Number.isFinite(Number(v))?Number(v):null;

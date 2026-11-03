@@ -8,8 +8,8 @@ const PaxChat=dynamic(()=>import('./pax-chat'),{loading:()=> <p role="status">Lo
 type Props={open:boolean;activation:number;onOpen:()=>void;onClose:()=>void;request?:{id:string;text:string};listingSlug?:string;area?:string;onPageAction:(action:PageAction)=>void};
 export default function MadisonBubble({open,activation,onOpen,onClose,request,listingSlug,area,onPageAction}:Props){
  const [loaded,setLoaded]=useState(false),[minimized,setMinimized]=useState(false),[consent,setConsent]=useState(false),[status,setStatus]=useState<'idle'|'connecting'|'connected'>('idle'),[error,setError]=useState(''),[muted,setMuted]=useState(false),[voiceRequest,setVoiceRequest]=useState<{id:string;text:string}>(),[position,setPosition]=useState<{x:number;y:number}|null>(null);
- const client=useRef<AnamClient|null>(null),video=useRef<HTMLVideoElement>(null),panel=useRef<HTMLElement>(null),generation=useRef(0),minimizedRef=useRef(false),seen=useRef(new Set<string>()),sessionTimer=useRef<ReturnType<typeof setTimeout>|null>(null),tokenRequest=useRef<AbortController|null>(null),drag=useRef<{x:number;y:number;left:number;top:number}|null>(null);
- const stop=useCallback(()=>{generation.current++;tokenRequest.current?.abort();if(sessionTimer.current)clearTimeout(sessionTimer.current);const current=client.current;client.current=null;if(current)void current.stopStreaming().catch(()=>{});if(video.current)video.current.srcObject=null;setStatus('idle');setMuted(false);},[]);
+ const client=useRef<AnamClient|null>(null),video=useRef<HTMLVideoElement>(null),panel=useRef<HTMLElement>(null),generation=useRef(0),speechGeneration=useRef(0),speechQueue=useRef<Promise<void>>(Promise.resolve()),minimizedRef=useRef(false),seen=useRef(new Set<string>()),sessionTimer=useRef<ReturnType<typeof setTimeout>|null>(null),tokenRequest=useRef<AbortController|null>(null),drag=useRef<{x:number;y:number;left:number;top:number}|null>(null);
+ const stop=useCallback(()=>{generation.current++;speechGeneration.current++;speechQueue.current=Promise.resolve();tokenRequest.current?.abort();if(sessionTimer.current)clearTimeout(sessionTimer.current);const current=client.current;client.current=null;if(current)void current.stopStreaming().catch(()=>{});if(video.current)video.current.srcObject=null;setStatus('idle');setMuted(false);},[]);
  useEffect(()=>()=>stop(),[stop]);
  useEffect(()=>{if(open){setLoaded(true);minimizedRef.current=false;setMinimized(false);panel.current?.focus({preventScroll:true});}},[open,request,activation]);
  useEffect(()=>{function fit(){setPosition(p=>p?{x:Math.max(8,Math.min(p.x,innerWidth-Math.min(380,innerWidth-24)-8)),y:Math.max(8,Math.min(p.y,innerHeight-Math.min(660,innerHeight-24)-8))}:null);}window.addEventListener('resize',fit);return()=>window.removeEventListener('resize',fit);},[]);
@@ -28,7 +28,7 @@ export default function MadisonBubble({open,activation,onOpen,onClose,request,li
     if(attempt!==generation.current)return;const latest=messages.at(-1);
     if(latest?.role==='user'&&latest.content.trim()&&!seen.current.has(latest.id)){seen.current.add(latest.id);setVoiceRequest({id:latest.id,text:latest.content});}
    });
-   avatar.addListener(AnamEvent.USER_SPEECH_STARTED,()=>{if(attempt===generation.current)avatar.interruptPersona();});
+   avatar.addListener(AnamEvent.USER_SPEECH_STARTED,()=>{if(attempt===generation.current){speechGeneration.current++;speechQueue.current=Promise.resolve();avatar.interruptPersona();}});
    avatar.addListener(AnamEvent.CONNECTION_CLOSED,()=>{if(attempt===generation.current){stop();setError('Video ended. Your conversation is saved; you can keep typing.');}});
    avatar.addListener(AnamEvent.MIC_PERMISSION_DENIED,()=>{if(attempt===generation.current){stop();setError('Microphone access was not allowed. You can still type to Pax.');}});
    await avatar.streamToVideoElement('madison-live-video');
@@ -36,7 +36,7 @@ export default function MadisonBubble({open,activation,onOpen,onClose,request,li
    setStatus('connected');if(minimizedRef.current)avatar.muteInputAudio();setMuted(minimizedRef.current);sessionTimer.current=setTimeout(()=>{stop();setError('Video session ended after five minutes. Your conversation stays here.');},300000);
   }catch(e){if(attempt!==generation.current)return;stop();setError(e instanceof Error?e.message:'Video is unavailable. You can still type to Pax.');}
  }
- const speak=useCallback((text:string)=>{const current=client.current;if(!current?.isStreaming())return;void current.talk(text).catch(()=>setError('Audio could not play. You can read the reply below.'));},[]);
+ const speak=useCallback((text:string)=>{const current=client.current;if(!current?.isStreaming())return;const speech=speechGeneration.current;speechQueue.current=speechQueue.current.then(async()=>{if(client.current!==current||!current.isStreaming()||speech!==speechGeneration.current)return;await current.talk(text);}).catch(()=>setError('Audio could not play. You can read the reply below.'));},[]);
  return <>
   {!open&&<button className="floating-pax madison-launch" onClick={onOpen} aria-haspopup="dialog" aria-label="Talk to Madison — powered by Pax"><img src="/images/team/3-madison.png" alt="" width={48} height={48}/><span>✦ Pax</span></button>}
   <aside ref={panel} tabIndex={-1} hidden={!open} className={`madison-panel ${minimized?'is-minimized':''}`} style={position?{left:position.x,top:position.y,right:'auto',bottom:'auto'}:undefined} role="dialog" aria-label="Ask Pax" aria-modal="false" onKeyDown={e=>{if(e.key==='Escape'){stop();onClose();}}}>

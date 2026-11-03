@@ -8,8 +8,8 @@ import ListingDisclosure from './listing-disclosure';
 import { type Listing,listingPrice } from '@/lib/listings';
 import ListingCard from './listing-card';
 import MapPanel from './map-panel';
-export default function PaxResults({session,busy,action}:{session:PublicPaxState|null;busy:boolean;action:(body:unknown)=>Promise<void>}){
- const [expanded,setExpanded]=useState(true),[selected,setSelected]=useState<{slug:string;request:number}>(),mapRef=useRef<HTMLDivElement>(null);
+export default function PaxResults({session,busy,action,initialExpanded=true}:{session:PublicPaxState|null;busy:boolean;action:(body:unknown)=>Promise<void>;initialExpanded?:boolean}){
+ const [expanded,setExpanded]=useState(initialExpanded),[selected,setSelected]=useState<{slug:string;request:number}>(),mapRef=useRef<HTMLDivElement>(null);
  const listings=useMemo(()=>(session?.results||[]).map(slug=>(session?.listingRecords||[]).find(l=>l.slug===slug)).filter((l):l is Listing=>!!l),[session?.results,session?.listingRecords]);
  const live=session?.feedMode==='live'||session?.feedMode==='unavailable';
  const compared=(session?.compared||[]).map(slug=>(session?.listingRecords||[]).find(l=>l.slug===slug)).filter((l):l is Listing=>!!l);

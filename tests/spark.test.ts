@@ -37,6 +37,11 @@ it('looks up a detail URL by its MLS number and never returns an invalid path',a
 it('supports the Hobson token name and sitemap count without exposing secrets',async()=>{
  vi.stubEnv('SPARK_ACCESS_TOKEN','');vi.stubEnv('SPARK_API_TOKEN','test-hobson');expect(sparkToken()).toBe('test-hobson');vi.stubEnv('SPARK_ACCESS_TOKEN','test-primary');expect(sparkToken()).toBe('test-primary');const fetcher=vi.fn().mockResolvedValue(Response.json({'@odata.count':12345,value:[]}));expect(await sparkCount(fetcher)).toBe(12345);expect(new URL(String(fetcher.mock.calls[0][0])).searchParams.get('$count')).toBe('true');
 });
+it('falls back to the approved IDX key when an older Spark token is rejected',async()=>{
+ vi.stubEnv('SPARK_ACCESS_TOKEN','expired-token');vi.stubEnv('SPARK_API_TOKEN','');vi.stubEnv('API_IDX_KEY','approved-token');
+ const fetcher=vi.fn().mockResolvedValueOnce(new Response('',{status:401})).mockResolvedValueOnce(Response.json({value:[record]}));
+ const data=await fetchSpark({}, {limit:1},fetcher);expect(data.listings).toHaveLength(1);expect(fetcher).toHaveBeenCalledTimes(2);expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer expired-token');expect(fetcher.mock.calls[1][1].headers.Authorization).toBe('Bearer approved-token');
+});
 it('recognizes AI referrals without sending query text or trusting lookalike domains',()=>{
  expect(aiReferral('https://chatgpt.com/c/private','?secret=do-not-send')).toBe('ChatGPT');expect(aiReferral('','?utm_source=perplexity&query=private')).toBe('Perplexity');expect(aiReferral('https://chatgpt.com.evil.example/','')).toBeNull();expect(aiReferral('https://google.com/','')).toBeNull();
 });

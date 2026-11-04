@@ -4,8 +4,18 @@ import { createHash } from 'node:crypto';
 import type { Listing,ListingFilters } from '../../lib/listings';
 import { englishLabel } from '../../lib/property-details';
 const DEFAULT_BASE='https://replication.sparkapi.com/Version/3/Reso/OData';
-export function sparkToken(){return process.env.SPARK_ACCESS_TOKEN||process.env.SPARK_API_TOKEN||'';}
+export function sparkTokens(){return [...new Set([process.env.SPARK_ACCESS_TOKEN,process.env.SPARK_API_TOKEN,process.env.API_IDX_KEY].map(value=>value?.trim()).filter((value):value is string=>!!value))];}
+export function sparkToken(){return sparkTokens()[0]||'';}
 export function sparkConfigured(){return !!sparkToken();}
+
+async function authorizedSparkFetch(url:string|URL,tokens:string[],signal:AbortSignal,fetcher:typeof fetch){
+ let response:Response|undefined;
+ for(const token of tokens){
+  response=await fetcher(url,{headers:{Authorization:`Bearer ${token}`,Accept:'application/json'},redirect:'error',signal,cache:'no-store'});
+  if(response.status!==401&&response.status!==403)return response;
+ }
+ return response!;
+}
 
 const text=(v:unknown)=>typeof v==='string'?v.trim():'';
 const number=(v:unknown)=>typeof v==='number'&&Number.isFinite(v)?v:typeof v==='string'&&v.trim()&&Number.isFinite(Number(v))?Number(v):null;
@@ -50,9 +60,9 @@ export function mapSpark(r:Record<string,unknown>,checkedAt:string):Listing|null
 export type SparkResult={listings:Listing[];checkedAt:string;hasMore:boolean};
 const cache=new Map<string,{until:number;result:SparkResult}>();
 export async function fetchSpark(filters:ListingFilters={},options:{listingId?:string;limit?:number;lean?:boolean;offset?:number}={},fetcher:typeof fetch=fetch):Promise<SparkResult>{
- const token=sparkToken();if(!token)throw new Error('Spark is not configured.');
+ const tokens=sparkTokens();if(!tokens.length)throw new Error('Spark is not configured.');
  const base=new URL(process.env.SPARK_API_BASE||DEFAULT_BASE);if(base.protocol!=='https:'||!(base.hostname==='sparkapi.com'||base.hostname.endsWith('.sparkapi.com')))throw new Error('Invalid Spark endpoint.');
- const limit=Math.min(options.limit||500,5000),key=createHash('sha256').update(JSON.stringify([token,base.href,filters,options])).digest('hex');
+ const limit=Math.min(options.limit||500,5000),key=createHash('sha256').update(JSON.stringify([tokens,base.href,filters,options])).digest('hex');
  const cached=cache.get(key);if(fetcher===fetch&&cached&&cached.until>Date.now())return cached.result;
  const url=new URL(base.href.replace(/\/$/,'')+'/Property');url.searchParams.set('$filter',sparkFilter(filters,options.listingId));url.searchParams.set('$top',String(Math.min(200,limit)));url.searchParams.set('$orderby',options.offset!==undefined?'ListingKey asc':filters.sort==='price-asc'?'ListPrice asc,ListingKey asc':filters.sort==='price-desc'?'ListPrice desc,ListingKey desc':'ModificationTimestamp desc,ListingKey desc');if(options.offset!==undefined)url.searchParams.set('$skip',String(Math.max(0,Math.floor(options.offset))));
  // Media belongs in $expand, not $select (Spark rejects Media in $select).
@@ -62,7 +72,7 @@ export async function fetchSpark(filters:ListingFilters={},options:{listingId?:s
  while(next&&rawCount<limit&&pages<30){
   const nextUrl:URL=new URL(next,base);if(nextUrl.origin!==base.origin||!nextUrl.pathname.startsWith(base.pathname.replace(/\/$/,'')+'/Property'))throw new Error('Invalid Spark pagination link.');
   if(visited.has(nextUrl.href))throw new Error('Repeated Spark pagination link.');visited.add(nextUrl.href);pages++;
-  const response:Response=await fetcher(nextUrl.href,{headers:{Authorization:`Bearer ${token}`,Accept:'application/json'},redirect:'error',signal,cache:'no-store'});
+  const response=await authorizedSparkFetch(nextUrl.href,tokens,signal,fetcher);
   if(!response.ok)throw new Error(`Spark request failed (${response.status}).`);
   const data:{value:Record<string,unknown>[];"@odata.nextLink"?:string}=await response.json();if(!Array.isArray(data.value))throw new Error('Invalid Spark response.');
   for(const raw of data.value){if(rawCount>=limit){truncated=true;break;}rawCount++;const listing=mapSpark(raw,checkedAt);if(listing&&!options.listingId)listing.photos=listing.photos.slice(0,1);if(listing&&!seen.has(listing.id)){seen.add(listing.id);rows.push(listing);}}
@@ -74,9 +84,9 @@ export async function fetchSpark(filters:ListingFilters={},options:{listingId?:s
 }
 
 export async function sparkCount(fetcher:typeof fetch=fetch):Promise<number>{
- const token=sparkToken();if(!token)return 0;
+ const tokens=sparkTokens();if(!tokens.length)return 0;
  const base=new URL(process.env.SPARK_API_BASE||DEFAULT_BASE);if(base.protocol!=='https:'||!(base.hostname==='sparkapi.com'||base.hostname.endsWith('.sparkapi.com')))throw new Error('Invalid Spark endpoint.');
  const url=new URL(base.href.replace(/\/$/,'')+'/Property');url.searchParams.set('$filter',sparkFilter());url.searchParams.set('$top','1');url.searchParams.set('$count','true');url.searchParams.set('$select','ListingKey');
- const response=await fetcher(url,{headers:{Authorization:`Bearer ${token}`,Accept:'application/json'},redirect:'error',signal:AbortSignal.timeout(15000),cache:'no-store'});if(!response.ok)throw new Error('MLS sitemap count unavailable.');
+ const response=await authorizedSparkFetch(url,tokens,AbortSignal.timeout(15000),fetcher);if(!response.ok)throw new Error('MLS sitemap count unavailable.');
  const data=await response.json(),count=data['@odata.count'];if(!Number.isSafeInteger(count)||count<0||count>500000)throw new Error('Invalid MLS sitemap count.');return count;
 }

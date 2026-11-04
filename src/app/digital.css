@@ -138,3 +138,12 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
  .madison-panel{width:min(220px,calc(100vw - 24px))}
  .madison-panel .madison-video{height:235px}
 }
+/* Anam's published voice widget stays in a small, fixed landscape frame. */
+.madison-panel.madison-embed-panel{width:min(224px,calc(100vw - 20px));height:auto;max-height:none;border-radius:10px;background:#091725}
+.madison-embed-panel .madison-embed-handle{height:24px;min-height:24px;padding:0 2px;gap:0;background:#091725}
+.madison-embed-panel .madison-embed-handle button{height:24px;min-height:24px;min-width:28px;padding:0 6px;font-size:13px;line-height:24px}
+.madison-embed-panel .madison-drag{gap:4px;cursor:grab;font-size:11px;white-space:nowrap}
+.madison-embed-panel .madison-drag span{font-size:11px}
+.madison-embed-panel .madison-embed-close{font-size:18px;margin-left:auto}
+.madison-embed{display:block;width:100%;height:132px;border:0;background:#091725}
+@media(max-width:700px){.madison-panel.madison-embed-panel{width:min(204px,calc(100vw - 16px));right:8px;bottom:calc(8px + env(safe-area-inset-bottom))}.madison-embed{height:122px}}

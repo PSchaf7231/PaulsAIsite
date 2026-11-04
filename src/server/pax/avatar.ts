@@ -1,4 +1,4 @@
-export const MADISON_PERSONA_ID = 'cdb09e97-23af-4628-9d27-f8a270fb8265';
+export const MADISON_PERSONA_ID = 'cdb09e97-23af-4628-9df7-f8a270fb8265';
 export class AnamSessionError extends Error{
  constructor(public status:number){super('Avatar service could not start.');}
 }

@@ -6,7 +6,7 @@ it('exchanges the private key for a short-lived token using the published person
  const fetcher=vi.fn().mockResolvedValue(Response.json({sessionToken:'ephemeral-token'}));
  expect(await createMadisonSession(fetcher)).toBe('ephemeral-token');
  const [url,options]=fetcher.mock.calls[0];expect(url).toBe('https://api.anam.ai/v1/auth/session-token');expect(options.headers.Authorization).toBe('Bearer private-test-value');
- expect(JSON.parse(options.body)).toEqual({personaConfig:{personaId:MADISON_PERSONA_ID}});
+ expect(JSON.parse(options.body)).toEqual({clientLabel:'pbrealestatepros-web',personaConfig:{personaId:MADISON_PERSONA_ID}});
  expect(options.redirect).toBe('error');
 });
 it('does not request a session without the private key or expose upstream error bodies',async()=>{

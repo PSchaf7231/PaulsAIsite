@@ -4,7 +4,7 @@ import type {PageAction} from '@/lib/pax';
 
 type Props={open:boolean;activation:number;onOpen:()=>void;onClose:()=>void;request?:{id:string;text:string};listingSlug?:string;area?:string;onPageAction:(action:PageAction)=>void};
 
-const embed=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#091725}anam-agent{display:block;width:100%;height:100%;--anam-sheet-height:100%;}</style></head><body><anam-agent layout="inline" agent-name="Madison" call-to-action="Talk to Madison" ui-text-input="false" ui-transcript="false" ui-captions="false" agent-id="cdb09e97-23af-4628-9df7-f8a270fb8265" api-base-url="https://lab.anam.ai"></anam-agent><script src="https://unpkg.com/@anam-ai/agent-widget" async><\/script></body></html>`;
+const embed=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#091725}anam-agent{display:block;width:100%;height:100%;--anam-sheet-height:100%;}</style></head><body><anam-agent layout="inline" agent-name="Madison" call-to-action="Start call" ui-text-input="false" ui-transcript="false" ui-captions="false" agent-id="cdb09e97-23af-4628-9df7-f8a270fb8265" api-base-url="https://lab.anam.ai"></anam-agent><script src="https://unpkg.com/@anam-ai/agent-widget" async><\/script></body></html>`;
 
 export default function MadisonBubble({open,activation,onOpen,onClose}:Props){
  const [position,setPosition]=useState<{x:number;y:number}|null>(null);

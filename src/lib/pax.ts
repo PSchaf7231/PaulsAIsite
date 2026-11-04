@@ -6,7 +6,7 @@ export type Contact = { name?: string; email?: string; phone?: string };
 export type ActionKind = "CONTACT"|"SEARCH"|"CALL"|"SHOWING"|"VALUATION";
 export type PendingAction = { id:string; kind:ActionKind; contact:Contact; preferredTime?:string; listingSlug?:string; address?:string; preferences:Preference; status:"pending"|"confirmed"|"declined"; createdAt:string };
 export type PaxEvent = { kind:string; at:string; listingSlug?:string; detail?:string };
-export type Notification = { id:string; channel?:"email"|"sms"; audience?:"agent"|"lead"; to?:string; reason:string; summary:string; status:"pending"|"sent"|"unconfigured"|"retry"|"failed"|"preview"|"manual"|"cancelled"; attempts:number; nextAttemptAt:string; providerId?:string };
+export type Notification = { id:string; integration?:"fub"|"meta"; payload?:Record<string,unknown>; channel?:"email"|"sms"; audience?:"agent"|"lead"; to?:string; reason:string; summary:string; status:"pending"|"sent"|"unconfigured"|"retry"|"failed"|"preview"|"manual"|"cancelled"; attempts:number; nextAttemptAt:string; providerId?:string };
 export type PageAction={id:string;turnId:string;kind:"photos"|"overview"|"interior"|"outdoor"|"practical"|"location"|"next";from:string;target?:string};
 export type PaxState = {
  listingRecords?:Listing[];feedMode?:"live"|"sample"|"unavailable";feedCheckedAt?:string;feedHasMore?:boolean;

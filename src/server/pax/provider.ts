@@ -6,7 +6,7 @@ type Provider = 'anthropic' | 'google' | 'xai';
 const keyNames = { anthropic: 'ANTHROPIC_API_KEY', google: 'GEMINI_API_KEY', xai: 'XAI_API_KEY' } as const;
 
 // Server-only consumer: never return this configuration (which contains a key) to clients.
-// Madison (voice avatar) may use her own brain via MADISON_AI_PROVIDER / MADISON_AI_MODEL; otherwise she shares Pax's.
+// Madison (voice avatar) may use her own brain via MADISON_AI_PROVIDER / MADISON_AI_MODEL; otherwise she shares Madison's.
 export function paxProviderConfig(env: Record<string, string | undefined> = process.env, persona?: 'madison') {
   const own = persona === 'madison' && !!env.MADISON_AI_PROVIDER?.trim();
   const providerVar = own ? 'MADISON_AI_PROVIDER' : 'AI_PROVIDER';
@@ -14,9 +14,9 @@ export function paxProviderConfig(env: Record<string, string | undefined> = proc
   const provider = (env[providerVar]?.trim().toLowerCase() || 'anthropic') as Provider;
   if (!Object.hasOwn(keyNames, provider)) throw new Error(`${providerVar} must be anthropic, google, or xai.`);
   const model = env[modelVar]?.trim() || (provider === 'anthropic' ? 'claude-haiku-5-5' : '');
-  if (!model) throw new Error(`Set ${modelVar} for the selected Pax provider.`);
+  if (!model) throw new Error(`Set ${modelVar} for the selected Madison provider.`);
   const apiKey = env[keyNames[provider]]?.trim();
-  if (!apiKey) throw new Error(`Pax is not configured. Set ${keyNames[provider]}.`);
+  if (!apiKey) throw new Error(`Madison is not configured. Set ${keyNames[provider]}.`);
   return { provider, model, apiKey };
 }
 

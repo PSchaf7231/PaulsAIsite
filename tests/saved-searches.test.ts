@@ -32,8 +32,8 @@ it('baselines existing inventory, alerts only new exact matches once, and uses t
  expect(s.notifications.filter(n=>n.reason==='new sample matches')).toHaveLength(1);expect(s.notifications.at(-1)?.channel).toBe('email');expect(queueListingAlerts(s,[...sampleListings,added])).toBe(0);
  saveConfirmedSearch(s,{mustHaves:['no HOA']},'search-2');expect(queueListingAlerts(s,[...sampleListings,added])).toBe(0);
 });
-it('manual mode queues email only and blocks legacy SMS even if notification mode is both',async()=>{
- vi.stubEnv('PAX_SMS_MODE','manual');vi.stubEnv('PAX_NOTIFICATIONS','both');const s=lead();expect(s.notifications.every(n=>n.channel==='email')).toBe(true);
+it('manual mode permits CRM delivery and email but blocks legacy SMS even if notification mode is both',async()=>{
+ vi.stubEnv('PAX_SMS_MODE','manual');vi.stubEnv('PAX_NOTIFICATIONS','both');const s=lead();expect(s.notifications.every(n=>n.integration==='fub'||n.channel==='email')).toBe(true);
  const fetcher=vi.fn();expect(await deliverNotification({...s.notifications[0],channel:'sms'},fetcher)).toMatchObject({status:'manual'});expect(fetcher).not.toHaveBeenCalled();
  expect(suggestedTexts(s)).toHaveLength(3);expect(suggestedTexts(s)[0]).toContain('Paul Schafranick');
 });

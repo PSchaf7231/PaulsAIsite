@@ -51,7 +51,7 @@ export function propose(state:PaxState,input:{kind:ActionKind;contact:Contact;pr
 export function notify(state:PaxState,reason:string){
  if(state.notifications.some(n=>n.reason===reason))return;
  const p=state.preferences;
- const summary=[`${state.preferences.intent==="SELLER"?"SELLER · ":""}Pax ${reason}.`,state.lead?.name||"Website visitor",[state.lead?.phone,state.lead?.email].filter(Boolean).join(" / ")||"No contact yet",p.intent||"Exploring",p.areas?.join(" or ")||p.area||"Palm Beach County",p.maxPrice?`budget $${p.maxPrice}`:"",p.beds?`${p.beds}+ beds`:"",p.timeline?`timeline: ${p.timeline}`:"",p.preApproved?"Pre-approved":"",`Source: ${state.leadOrigin||state.source||"WEBSITE"}`,state.seller?.address?`Seller address: ${state.seller.address}`:"",state.seller?.reason?`Reason: ${state.seller.reason}`:"",state.seller?.alsoBuying!==undefined?`Also buying: ${state.seller.alsoBuying?"yes":"no"}`:"",state.wanted||"",`Viewed: ${state.viewed.join(", ")||"none"}; saved: ${state.saved.join(", ")||"none"}`,state.appointments.at(-1)?.preferredTime||""].filter(Boolean).join(" · ").slice(0,900);
+ const summary=[`${state.preferences.intent==="SELLER"?"SELLER · ":""}Madison ${reason}.`,state.lead?.name||"Website visitor",[state.lead?.phone,state.lead?.email].filter(Boolean).join(" / ")||"No contact yet",p.intent||"Exploring",p.areas?.join(" or ")||p.area||"Palm Beach County",p.maxPrice?`budget $${p.maxPrice}`:"",p.beds?`${p.beds}+ beds`:"",p.timeline?`timeline: ${p.timeline}`:"",p.preApproved?"Pre-approved":"",`Source: ${state.leadOrigin||state.source||"WEBSITE"}`,state.seller?.address?`Seller address: ${state.seller.address}`:"",state.seller?.reason?`Reason: ${state.seller.reason}`:"",state.seller?.alsoBuying!==undefined?`Also buying: ${state.seller.alsoBuying?"yes":"no"}`:"",state.wanted||"",`Viewed: ${state.viewed.join(", ")||"none"}; saved: ${state.saved.join(", ")||"none"}`,state.appointments.at(-1)?.preferredTime||""].filter(Boolean).join(" · ").slice(0,900);
  for(const channel of (automaticSms()?["email","sms"]:["email"]) as ("email"|"sms")[])state.notifications.push({id:randomUUID(),reason,summary:summary+ (state.lead?`\nOpen lead: ${siteUrl()}/admin/leads/${state.id}`:""),status:"pending",attempts:0,nextAttemptAt:now(),channel,audience:"agent"});
  event(state,"agent_notification_queued",reason);
 }
@@ -73,7 +73,7 @@ export function confirmAction(state:PaxState,id:string,accepted:boolean){
   state.appointments.push({id:action.id,kind:action.kind,preferredTime:action.preferredTime!,status:"REQUESTED",createdAt:now()});event(state,"appointment_requested","CALL");
   message=`Your ${action.kind==="SHOWING"?"showing":"call"} request is recorded. Paul still needs to confirm the time; it is not booked yet.`;
  }
- if(action.kind==="VALUATION"){state.preferences.intent="SELLER";state.seller={...state.seller,address:action.address||state.seller?.address};message="Your free local pricing review request is saved for Paul. Pax has not generated a valuation.";}
+ if(action.kind==="VALUATION"){state.preferences.intent="SELLER";state.seller={...state.seller,address:action.address||state.seller?.address};message="Your free local pricing review request is saved for Paul. Madison has not generated a valuation.";}
  if(!hadLead)notify(state,"lead captured");else if(action.kind!=="CONTACT")notify(state,`${action.kind.toLowerCase()} requested ${action.id}`);
  event(state,"action_confirmed",action.kind);return {status:"confirmed",message};
 }

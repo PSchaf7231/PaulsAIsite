@@ -22,14 +22,14 @@ describe('interest and conversion',()=>{
   const views=newState('c'.repeat(64));trackActivity(views,{kind:'visit',visitId:randomUUID()});for(const home of sampleListings.slice(0,3))trackActivity(views,{kind:'view',slug:home.slug});expect(activitySummary(views).eligible).toBe(true);
   const r=newState('b'.repeat(64));trackActivity(r,{kind:'visit',visitId:randomUUID()});trackActivity(r,{kind:'visit',visitId:randomUUID()});expect(activitySummary(r).eligible).toBe(true);
  });
- it('attaches browsing and preferences to one lead and queues four separate deliveries exactly once',()=>{
+ it('attaches browsing and preferences to one lead and queues independent deliveries exactly once',()=>{
   const s=newState('a'.repeat(64));trackActivity(s,{kind:'favorite',slug:'delray-courtyard'});trackActivity(s,{kind:'search',filters:{area:'Delray Beach',maxPrice:600000}});
   captureLead(s,input);const id=s.lead?.id;captureLead(s,input);
   expect(s.lead?.id).toBe(id);expect(s.source).toBe('WEBSITE');expect(s.saved).toEqual(['delray-courtyard']);expect(s.preferences).toMatchObject({area:'Delray Beach',timeline:'60 days'});
-  expect(s.notifications).toHaveLength(4);expect(s.notifications.filter(n=>n.audience==='lead').map(n=>n.channel).sort()).toEqual(['email','sms']);expect(activitySummary(s).eligible).toBe(false);
+  expect(s.notifications).toHaveLength(5);expect(s.notifications.filter(n=>n.audience==='lead').map(n=>n.channel).sort()).toEqual(['email','sms']);expect(activitySummary(s).eligible).toBe(false);
  });
  it('never interprets contact information as permission to automate messages',()=>{
-  const s=newState('a'.repeat(64));captureLead(s,{...input,smsConsent:false,emailConsent:false});expect(s.notifications).toHaveLength(2);expect(s.notifications.every(n=>n.audience==='agent')).toBe(true);
+  const s=newState('a'.repeat(64));captureLead(s,{...input,smsConsent:false,emailConsent:false});expect(s.notifications).toHaveLength(3);expect(s.notifications.every(n=>n.audience==='agent')).toBe(true);
  });
  it('delivers both channels independently and retries only the failed channel',async()=>{
   for(const [k,v] of Object.entries({PAX_NOTIFICATIONS:'both',RESEND_API_KEY:'test',RESEND_FROM:'pax@example.com',PAX_AGENT_EMAIL:'paul@example.com',PAX_AGENT_PHONE:'+15612557285',TWILIO_ACCOUNT_SID:'test',TWILIO_AUTH_TOKEN:'test',TWILIO_FROM_NUMBER:'+12025550199'}))vi.stubEnv(k,v);

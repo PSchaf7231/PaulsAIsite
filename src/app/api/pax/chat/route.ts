@@ -15,7 +15,7 @@ export const runtime="nodejs";
 export async function POST(req:Request){try{
  const input=z.object({text:z.string().trim().min(1).max(2000),turnId:z.string().uuid(),consent:z.literal(true),persona:z.literal("madison").optional(),listingSlug:z.string().max(240).optional(),area:z.string().max(100).optional()}).strict().safeParse(await readBody(req));
  if(!input.success)throw new RequestError("Send a short message and acknowledge the chat privacy notice.");
- if(!paxConfigured()&&process.env.PAX_TEST_MODE!=="1")return Response.json({error:"Pax’s AI connection is not configured yet. You can browse listings or contact Paul directly."},{status:503});
+ if(!paxConfigured()&&process.env.PAX_TEST_MODE!=="1")return Response.json({error:"Madison’s AI connection is not configured yet. You can browse listings or contact Paul directly."},{status:503});
  if(process.env.PAX_TEST_MODE==="1"&&(process.env.NODE_ENV==="production"||process.env.PAX_STORAGE!=="local"))throw new RequestError("Test mode is not available here.",503);
  const id=(await identity(true))!;const encoder=new TextEncoder();
  const stream=new ReadableStream({async start(controller){
@@ -35,7 +35,7 @@ export async function POST(req:Request){try{
    });
    send({type:"done",session:publicPaxState(state)});
    after(async()=>{try{await flushNotifications(id);}catch{/* Durable queue remains for the retry worker. */}});
-  }catch(error){send({type:"error",error:error instanceof RequestError?error.message:"Pax couldn’t complete that reply. Please retry; your previous conversation is safe. Paul is also available directly."});}
+  }catch(error){send({type:"error",error:error instanceof RequestError?error.message:"Madison couldn’t complete that reply. Please retry; your previous conversation is safe. Paul is also available directly."});}
   finally{if(connected)controller.close();}
  }});
  return new Response(stream,{headers:{"Content-Type":"application/x-ndjson; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});

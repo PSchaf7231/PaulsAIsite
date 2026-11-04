@@ -6,8 +6,8 @@ export async function POST(req:Request){try{
  const parsed=z.object({consent:z.literal(true)}).strict().safeParse(await readBody(req));
  if(!parsed.success)throw new RequestError('Please accept the voice-chat privacy notice first.');
  if(!process.env.ANAM_API_KEY)throw new RequestError('Madison is temporarily unavailable. You can still browse homes or contact Paul.',503);
- // Anam video chat is independent of Pax's saved text conversations. Do not
- // create a Pax cookie or touch the database before starting the voice call.
+ // Anam video chat is independent of Madison's saved text conversations. Do not
+ // create a Madison cookie or touch the database before starting the voice call.
  // A storage outage must never stop Madison from speaking.
  let sessionToken:string;
  try{sessionToken=await createMadisonSession();}

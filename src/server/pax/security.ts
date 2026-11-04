@@ -22,6 +22,6 @@ export async function readBody(req:Request){
 }
 export function routeError(error:unknown){
  const status=error instanceof RequestError?error.status:error instanceof PaxBusyError?409:503;
- const message=error instanceof RequestError||error instanceof PaxBusyError?error.message:"Pax could not save or load this conversation. Please check setup or try again. You can still contact Paul directly.";
+ const message=error instanceof RequestError||error instanceof PaxBusyError?error.message:"Madison could not save or load this conversation. Please check setup or try again. You can still contact Paul directly.";
  return Response.json({error:message},{status,headers:{"Cache-Control":"no-store"}});
 }

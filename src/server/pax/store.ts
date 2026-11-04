@@ -10,7 +10,7 @@ const globalDb=globalThis as unknown as {paxDb?:ReturnType<typeof createPrismaCl
 function db(){return globalDb.paxDb??=createPrismaClient();}
 function local(){
  if(process.env.PAX_STORAGE==="local"){
-  if(process.env.NODE_ENV==="production")throw new Error("Local Pax storage is development-only. Use database storage in production.");
+  if(process.env.NODE_ENV==="production")throw new Error("Local Madison storage is development-only. Use database storage in production.");
   return true;
  }
  return false;

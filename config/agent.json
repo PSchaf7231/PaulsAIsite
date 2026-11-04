@@ -1,7 +1,7 @@
 {
   "name": "Paul Schafranick",
   "brandName": "Palm Beach Real Estate Pros",
-  "licenseNumber": "",
+  "licenseNumber": "63016579",
   "phone": "561-255-7285",
   "email": "paul@pbrealestatepros.com",
   "officeAddress": "",
@@ -10,7 +10,7 @@
   "socials": {},
   "market": "Palm Beach County, FL",
   "assistant": {
-    "name": "Pax",
+    "name": "Madison",
     "personality": "A friendly, sharp local expert. Be clear, helpful, and grounded in verified facts."
   },
   "stats": {
@@ -29,5 +29,5 @@
     "Wellington",
     "Palm Beach Gardens"
   ],
-  "brokerage": ""
+  "brokerage": "VantaSure Realty"
 }

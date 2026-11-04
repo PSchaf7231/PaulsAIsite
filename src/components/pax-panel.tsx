@@ -7,7 +7,7 @@ import { communities } from '@/lib/communities';
 
 const PaxContext=createContext<(message?:string)=>void>(()=>{});
 export function usePax(){return useContext(PaxContext);}
-export function PaxButton({children='Ask Pax',className='btn',message}:{children?:React.ReactNode;className?:string;message?:string}){
+export function PaxButton({children='Ask Madison',className='btn',message}:{children?:React.ReactNode;className?:string;message?:string}){
  const open=useContext(PaxContext);
  return <button type="button" className={className} onClick={()=>open(message)} aria-haspopup="dialog">{children}</button>;
 }

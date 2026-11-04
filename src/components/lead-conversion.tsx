@@ -2,6 +2,7 @@
 import { useEffect,useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import {analyticsConsent,marketingEvent} from '@/lib/marketing-events';
 import { track,activityReady } from '@/lib/activity-client';
 export default function LeadConversion({live=false}:{live?:boolean}){
  const pathname=usePathname();
@@ -13,16 +14,16 @@ export default function LeadConversion({live=false}:{live?:boolean}){
   const interval=setInterval(()=>{if(document.visibilityState==='visible')void track({kind:'time',seconds:30});},30000);
   return()=>clearInterval(interval);
  },[]);
- useEffect(()=>{const match=/^\/listings\/([^/]+)$/.exec(pathname);if(match)void track({kind:'view',slug:decodeURIComponent(match[1])});},[pathname]);
+ useEffect(()=>{const match=/^\/listings\/([^/]+)$/.exec(pathname);if(match){void track({kind:'view',slug:decodeURIComponent(match[1])});marketingEvent('listing_view_count');}},[pathname]);
  async function submit(e:React.FormEvent<HTMLFormElement>){
   e.preventDefault();setBusy(true);setMessage('');const f=new FormData(e.currentTarget);
-  try{await activityReady();const r=await fetch('/api/pax/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.get('email'),purpose:'CONTACT',smsConsent:false,emailConsent:false})});const body=await r.json();if(!r.ok)throw new Error(body.error);setMessage(body.message);setOpen(false);}
+  try{await activityReady();const r=await fetch('/api/pax/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.get('email'),purpose:'CONTACT',smsConsent:false,emailConsent:false,eventId:crypto.randomUUID(),analyticsConsent:analyticsConsent()})});const body=await r.json();if(!r.ok)throw new Error(body.error);marketingEvent('Lead',body.eventId);window.location.assign('/thank-you');}
   catch(e){setMessage(e instanceof Error?e.message:'Please try again.');}finally{setBusy(false);}
  }
  function dismiss(){setOpen(false);void track({kind:'dismiss'});}
  if(pathname.startsWith("/admin")||pathname==='/contact')return null;
- return <section className="lead-conversion" aria-label="Next steps with Pax">
-  <div className="container"><p><strong>Pax · Your next move</strong> Want help finding real Palm Beach County homes?</p><button className="btn outline small" onClick={()=>setOpen(v=>!v)}>Ask Paul to follow up</button>
+ return <section className="lead-conversion" aria-label="Next steps with Madison">
+  <div className="container"><p><strong>Madison · Your next move</strong> Want help finding real Palm Beach County homes?</p><button className="btn outline small" onClick={()=>setOpen(v=>!v)}>Ask Paul to follow up</button>
   {open&&<form className="lead-form" onSubmit={submit}><h2>Let’s make your next move easier.</h2><p>What email should Paul use? You can keep browsing without sharing anything else.</p>
    <label>Email<input name="email" type="email" autoComplete="email" required maxLength={254}/></label>
    <p className="pax-fine">Submitting saves your contact details and browsing history for Paul’s personal follow-up. <Link href="/privacy">Privacy</Link>. {!live&&"Fictional sample properties cannot be toured; "}all appointments require confirmation.</p>

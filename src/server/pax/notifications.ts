@@ -1,8 +1,22 @@
+import {metaPixelId} from '../../lib/marketing-config';
+import { createHash } from 'node:crypto';
 import { automaticSms } from "./delivery-settings";
 import type { Notification, PaxState } from "../../lib/pax";
 import { agent } from "../../lib/config";
 import { withSession } from "./store";
 export async function deliverNotification(n:Notification,fetcher:typeof fetch=fetch){
+ if(n.integration){
+  const key=n.integration==='fub'?process.env.FUB_API_KEY:process.env.META_CONVERSIONS_ACCESS_TOKEN;
+  if(!key)return {status:'unconfigured' as const};
+  const hash=(value:string)=>createHash('sha256').update(value).digest('hex');
+  const payload=n.payload||{};
+  const response=await fetcher(n.integration==='fub'?'https://api.followupboss.com/v1/events':`https://graph.facebook.com/v24.0/${metaPixelId}/events`,{method:'POST',headers:{Authorization:n.integration==='fub'?`Basic ${Buffer.from(`${key}:`).toString('base64')}`:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify(n.integration==='fub'?payload:{data:[{event_name:'Lead',event_time:payload.eventTime,event_id:payload.eventId,action_source:'website',event_source_url:`${process.env.NEXT_PUBLIC_SITE_URL||'https://www.pbrealestatepros.com'}/contact`,user_data:{...(payload.email?{em:[hash(String(payload.email).trim().toLowerCase())]}:{}),...(payload.phone?{ph:[hash(String(payload.phone).replace(/\D/g,''))]}:{})}}]}),signal:AbortSignal.timeout(10000)});
+  if(!response.ok)throw new Error(`Lead integration returned ${response.status}`);
+  const result=await response.json();
+  if(n.integration==='meta'&&!result.events_received)throw new Error('Meta did not acknowledge conversion');
+  if(n.integration==='fub'&&!result.id)throw new Error('Follow Up Boss did not acknowledge lead');
+  return {status:'sent' as const,providerId:String(result.id||payload.eventId)};
+ }
  const mode=process.env.PAX_NOTIFICATIONS||"email";
  const channel=n.channel||(mode==="sms"?"sms":"email");
  if(channel==="sms"&&!automaticSms())return {status:"manual" as const};
@@ -17,7 +31,7 @@ export async function deliverNotification(n:Notification,fetcher:typeof fetch=fe
  if(!to)return {status:"unconfigured" as const};
  if(channel==="email"){
   if(!process.env.RESEND_API_KEY||!process.env.RESEND_FROM||!to)return {status:"unconfigured" as const};
-  response=await fetcher("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":n.id},body:JSON.stringify({from:process.env.RESEND_FROM,to:[to],reply_to:process.env.PAX_AGENT_EMAIL,subject:n.audience==="lead"?"Your request to Paul Schafranick":n.summary.startsWith("SELLER")?"Pax: SELLER needs your attention":"Pax: a visitor needs your attention",text:`${n.summary}\n\n${agent.name}`}),signal:AbortSignal.timeout(10000)});
+  response=await fetcher("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":n.id},body:JSON.stringify({from:process.env.RESEND_FROM,to:[to],...(n.audience!=='lead'?{cc:[process.env.FUB_LEAD_EMAIL||'nextendeavorcre@followupboss.me']}:{}),reply_to:process.env.PAX_AGENT_EMAIL,subject:n.audience==="lead"?"Your request to Paul Schafranick":n.summary.startsWith("SELLER")?"Madison: SELLER needs your attention":"Madison: a visitor needs your attention",text:`${n.summary}\n\n${agent.name}`}),signal:AbortSignal.timeout(10000)});
  }else if(channel==="sms"){
   const account=process.env.TWILIO_ACCOUNT_SID,token=process.env.TWILIO_AUTH_TOKEN,from=process.env.TWILIO_FROM_NUMBER;
   if(!account||!token||!from||!to)return {status:"unconfigured" as const};

@@ -63,3 +63,6 @@ body:has(.coastal-home) .lead-conversion{background:#f7f4ed;border-color:#e5dfd3
 body:has(.coastal-home) .lead-conversion .btn{background:#0a1628;color:#fff5d5;border-color:#a58a43}
 body:has(.coastal-home) .lead-conversion .btn.outline{background:transparent;color:#0a1628}
 body:has(.coastal-home) .coastal-home :focus-visible{outline-color:#d4af37}
+
+/* The Madison launcher already includes its full label. */
+button.floating-pax.madison-launch > span::after { content: none !important; }

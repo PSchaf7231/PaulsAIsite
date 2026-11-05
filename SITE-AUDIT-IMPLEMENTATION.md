@@ -78,10 +78,9 @@ access to binaries.prisma.sh and checksum verification intact.
 Provider integration tests use mocked requests; production CRM/email delivery,
 Anam sessions, live MLS access, and Vercel deployment are not verified by these
 checks. Existing browser tests were not run and several still describe older UI.
-The audit identified outstanding issues: homepage typed requests are not passed
-into the unchanged Anam iframe; sort changes require another Search click; reset
-applies a $1 million minimum and house filter; rental price choices need review.
-Those audit items are not fixed by this change.
+The subsequent search/card/detail/Pixel changes and their validation are described
+in LAUNCH-FIXES.md. Typed search now uses a separate website search service while
+Anam voice startup remains unchanged. Production verification remains blocked.
 
 Madison's launcher image is a 320×320 WebP, 13,358 bytes versus a 358,982-byte
 PNG, preloaded in the root layout. The iframe contents are unchanged. No valid

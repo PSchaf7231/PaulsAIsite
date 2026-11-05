@@ -10,8 +10,6 @@ export function cityHomeSearchUrl(city:string){return `/listings?${new URLSearch
 
 export function listingPageFilters(params:Record<string,string|string[]|undefined>){
  const values=Object.fromEntries(Object.entries(params).filter(([key,value])=>['city','type','propertyType','minPrice','maxPrice','beds','baths','pool','waterfront','garage','sort'].includes(key)&&typeof value==='string'));
- const defaults={type:'SALE' as const,propertyType:'HOUSE',minPrice:1000000,sort:'price-desc' as const};
- const explicit=['type','propertyType','minPrice','maxPrice'].some(key=>values[key]!==undefined);
- const parsed=listingQuerySchema.safeParse({...(!explicit?defaults:{}),sort:'price-desc',...values});
- return parsed.success?parsed.data:defaults;
+ const parsed=listingQuerySchema.safeParse(values);
+ return parsed.success?parsed.data:{};
 }

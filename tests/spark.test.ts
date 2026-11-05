@@ -62,3 +62,18 @@ it('excludes commercial and below-floor rentals from every feed including direct
  expect(mapSpark({...record,PropertyType:'Residential Lease',ListPrice:3500},'now')?.price).toBe(3500);
  expect(sparkFilter()).toContain("ListPrice ge 3500");
 });
+it('round-trips Ocean Blvd and every generated detail slug, including ZIP+4 and hyphenated MLS IDs',async()=>{
+ vi.stubEnv('SPARK_ACCESS_TOKEN','test-round-trip');
+ for(const [id,zip] of [['R11140358','33480'],['R11140358','33480-1234'],['RX-1234567','33444']]){
+  vi.stubEnv('SPARK_ACCESS_TOKEN',`test-round-trip-${id}-${zip}`);
+  const raw={...record,StreetNumber:'1491',StreetDirPrefix:'N',StreetName:'Ocean',StreetSuffix:'Blvd',ListingId:id,PostalCode:zip};
+  const mapped=mapSpark(raw,'2026-11-05T00:00:00Z')!;
+  const fetcher=vi.fn().mockResolvedValue(Response.json({value:[raw]}));vi.stubGlobal('fetch',fetcher);
+  expect((await getListing(mapped.slug))?.mlsNumber).toBe(id);
+  expect(new URL(fetcher.mock.calls[0][0]).searchParams.get('$filter')).toContain(`ListingId eq '${id}'`);
+ }
+});
+it('does not turn a provider outage into a property-not-found result',async()=>{
+ vi.stubEnv('SPARK_ACCESS_TOKEN','test-detail-failure');vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('',{status:503})));
+ await expect(getListing('1491-n-ocean-blvd-palm-beach-33480-r11140358')).rejects.toThrow('Spark request failed');
+});

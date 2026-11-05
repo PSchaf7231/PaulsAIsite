@@ -13,12 +13,14 @@ export async function readSnapshot():Promise<Snapshot>{
  const snapshot={listings:rows[0].listings as Listing[],checkedAt:new Date(rows[0].checkedAt).toISOString()};
  memory={snapshot,until:Date.now()+30000};return snapshot;
 }
-export async function collectSnapshot(fetchPage=fetchSpark):Promise<Snapshot>{
+type Progress=(progress:{stage:string;recordsRead?:number;eligibleHomes?:number;elapsedSeconds?:number})=>void;
+export async function collectSnapshot(fetchPage=fetchSpark,onProgress?:Progress):Promise<Snapshot>{
  const rows=new Map<string,Listing>();let offset=0;const started=Date.now();
  for(;;){
   if(Date.now()-started>240000)throw new Error('Inventory refresh exceeded its time budget; previous snapshot retained.');
   const page=await fetchPage({}, {limit:200,offset,fullPhotos:true});
   for(const listing of page.listings)rows.set(listing.id,listing);
+  onProgress?.({stage:'MLS batch complete',recordsRead:offset+page.rawCount,eligibleHomes:rows.size,elapsedSeconds:Math.round((Date.now()-started)/1000)});
   if(!page.hasMore)break;
   if(!page.rawCount)throw new Error('Inventory pagination did not advance.');
   offset+=page.rawCount;
@@ -26,13 +28,15 @@ export async function collectSnapshot(fetchPage=fetchSpark):Promise<Snapshot>{
  }
  return {listings:[...rows.values()],checkedAt:new Date().toISOString()};
 }
-export async function refreshSnapshot(){
+export async function refreshSnapshot(onProgress?:Progress){
  const client=await database().connect();
+ onProgress?.({stage:'Database connected'});
  try{
   const lock=await client.query('SELECT pg_try_advisory_lock(733196970) AS locked');
   if(!lock.rows[0].locked)return {skipped:true};
   try{
-   const snapshot=await collectSnapshot();
+   const snapshot=await collectSnapshot(fetchSpark,onProgress);
+   onProgress?.({stage:'Saving complete snapshot',eligibleHomes:snapshot.listings.length});
    await client.query('INSERT INTO "ListingSnapshot" (id,listings,"checkedAt") VALUES (1,$1::jsonb,$2) ON CONFLICT (id) DO UPDATE SET listings=EXCLUDED.listings,"checkedAt"=EXCLUDED."checkedAt"',[JSON.stringify(snapshot.listings),snapshot.checkedAt]);
    memory=undefined;return {count:snapshot.listings.length,checkedAt:snapshot.checkedAt};
   }finally{await client.query('SELECT pg_advisory_unlock(733196970)');}

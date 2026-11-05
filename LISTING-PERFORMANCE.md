@@ -1,6 +1,6 @@
 # Listing performance — November 5, 2026
 
-Search and detail requests read a shared PostgreSQL snapshot instead of calling Spark per visitor. The initial listing page contains the count and up to 24 cards in server-rendered HTML. Subsequent pages also contain 24 cards. Sorting runs across the complete stored inventory before pagination; cards and map pins share the same returned page.
+Search and detail requests read a shared PostgreSQL snapshot instead of calling Spark per visitor. The initial listing page contains the count and up to 24 cards in server-rendered HTML. Subsequent pages also contain 24 cards. Sorting runs across the complete stored inventory before pagination; cards paginate independently of the map. The map endpoint returns compact coordinates, prices and property links for every matching home in the snapshot, without a 24/200/500 cap. The browser selects homes in the visible area and groups nearby pins. Each group exposes paginated property links, including homes at identical coordinates. Moving the map does not change the card search. Missing coordinates are disclosed rather than invented.
 
 Fresh visits default to SALE, $750,000–$9,999,999, ascending price. Campaign tracking parameters do not remove those defaults. Explicit searches retain their requested filters. Reset still clears everything, including the typed query, using `/listings?all=1`.
 
@@ -20,8 +20,8 @@ The replica stores full detail photos. Public card responses include only the fi
 
 ## Verification
 
-- 94 unit tests pass, including full-inventory sorting/pagination, zero visitor MLS fetches, failed-refresh preservation, stale-cache rejection and defaults with campaign tags.
-- 18 desktop/mobile browser tests pass against the local production server. These cover typed search, sorting, Reset, lease labels, HTML-rendered cards/count, default prices, map synchronization, pagination, scroll and pending empty-state handling, and preservation of Madison's embed.
+- 97 unit tests pass, including full-inventory sorting/pagination, zero visitor MLS fetches, failed-refresh preservation, stale-cache rejection and defaults with campaign tags.
+- 18 desktop/mobile browser tests pass against the local production server. These cover typed search, sorting, Reset, lease labels, HTML-rendered cards/count, default prices, map coverage beyond 200 homes, grouping, map movement, pagination, scroll and pending empty-state handling, and preservation of Madison's embed.
 - Local Next production build and TypeScript checks pass.
 - Local browser tests use fictional fixtures. No claim of 1–2 second production performance is made from those tests.
 - Production browser access is blocked by the Codex environment network policy (proxy CONNECT 403 / ERR_TUNNEL_CONNECTION_FAILED). GitHub's deployment-status API is also blocked. Vercel credentials are not available here. Production build status, full MLS replication, and live timings still require verification.

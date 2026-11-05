@@ -55,7 +55,7 @@ test('default inventory is sale-only, $750k to below $10m, ascending, and presen
  const response=await request.get('/listings');const html=await response.text();expect(html).toContain('data-testid="listing-card"');expect(html).toContain('1 property found');
  await page.goto('/listings');await expect(page.getByRole('combobox',{name:'Property type',exact:true})).toHaveValue('SALE');await expect(page.getByRole('combobox',{name:'Min price ($)',exact:true})).toHaveValue('750000');await expect(page.getByRole('combobox',{name:'Max price ($)',exact:true})).toHaveValue('9999999');await expect(page.getByRole('combobox',{name:'Sort by'})).toHaveValue('price-asc');
  await expect(page.getByTestId('listing-card')).toHaveCount(1);await expect(page.getByTestId('listing-card')).toContainText('$925,000');
- await page.locator('.map-shell').scrollIntoViewIfNeeded();await expect(page.locator('.map-price')).toHaveCount(1);await expect(page.locator('.map-price')).toContainText('$925k');
+ await page.locator('.map-shell').scrollIntoViewIfNeeded();await expect(page.locator('.map-price')).toHaveCount(1);await expect(page.locator('.map-price')).toContainText('$925,000');
 });
 test('loading never becomes an empty result and searches scroll to results',async({page})=>{
  await page.goto('/listings?city=Missing');
@@ -65,10 +65,14 @@ test('loading never becomes an empty result and searches scroll to results',asyn
  await expect.poll(async()=>Math.round((await page.locator('#listing-results').boundingBox())!.y)).toBeLessThan(200);
  finish();await expect(page.getByTestId('listing-card')).toHaveCount(1);
 });
-test('sort updates cards and map from the same page, and pagination fetches the next page',async({page})=>{
- const homes=Array.from({length:50},(_,i)=>({...samples[0],id:`fixture-${i}`,slug:`fixture-${i}`,price:750000+i*10000}));
- await page.route('**/api/listings?*',route=>{const params=new URL(route.request().url()).searchParams;const pageNumber=Number(params.get('page')||1);const sorted=params.get('sort')==='price-desc'?[...homes].reverse():homes;return route.fulfill({json:{listings:sorted.slice((pageNumber-1)*24,pageNumber*24),total:50,mode:'sample',hasMore:pageNumber*24<50}});});
- await page.goto('/listings');await page.getByRole('combobox',{name:'Sort by'}).selectOption('price-desc');await expect(page.getByTestId('listing-card')).toHaveCount(24);await expect(page.getByTestId('listing-card').first()).toContainText('$1,240,000');
- await page.locator('.map-shell').scrollIntoViewIfNeeded();await expect(page.locator('.map-price')).toHaveCount(24);await expect(page.locator('.map-price').first()).toContainText('$1.24m');
- await page.getByRole('button',{name:'Next 24 homes'}).click();await expect(page.getByTestId('listing-card').first()).toContainText('$1,000,000');await expect(page.locator('.map-price').first()).toContainText('$1.00m');
+test('map includes all matching homes independently of card pages, with accessible grouped links',async({page})=>{
+ const homes=Array.from({length:250},(_,i)=>({...samples[0],id:`fixture-${i}`,slug:`fixture-${i}`,address:`Fixture ${i}`,price:750000+i*1000}));
+ await page.route('**/api/listings?*',route=>{const params=new URL(route.request().url()).searchParams;const pageNumber=Number(params.get('page')||1);const sorted=params.get('sort')==='price-desc'?[...homes].reverse():homes;return route.fulfill({json:{listings:sorted.slice((pageNumber-1)*24,pageNumber*24),total:250,mode:'sample',hasMore:pageNumber*24<250}});});
+ let mapRequests=0;
+ await page.route('**/api/listings/map?*',route=>{mapRequests++;return route.fulfill({json:{homes,total:250,missingCoordinates:0,mode:'sample'}});});
+ await page.goto('/listings');await page.getByRole('combobox',{name:'Sort by'}).selectOption('price-desc');await expect(page.getByTestId('listing-card')).toHaveCount(24);
+ await page.locator('.map-shell').scrollIntoViewIfNeeded();await expect(page.locator('.area-map-summary').first()).toContainText('250 mapped homes');await expect(page.locator('.map-cluster')).toHaveText('250');
+ await page.locator('.map-cluster').click();await expect(page.getByRole('link',{name:/Fixture 0$/})).toBeVisible();await page.getByRole('button',{name:'More homes',exact:true}).click();await expect(page.getByRole('link',{name:/Fixture 10$/})).toBeVisible();await page.locator('.leaflet-popup-close-button').click();
+ const before=mapRequests;await page.getByRole('button',{name:'Next 24 homes'}).click();await expect(page.getByTestId('listing-card').first()).toContainText('$975,000');await expect(page.locator('.map-cluster')).toHaveText('250');expect(mapRequests).toBe(before);
+ await page.locator('.map-shell').scrollIntoViewIfNeeded();const map=page.locator('.area-map .leaflet-container');await map.focus();for(let i=0;i<12;i++)await map.press('ArrowRight');await expect(page.locator('.area-map-count')).toContainText('0 matching homes');await expect(page.getByTestId('listing-card')).toHaveCount(24);
 });

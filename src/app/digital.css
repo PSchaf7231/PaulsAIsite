@@ -167,3 +167,7 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
 .madison-card-start span{padding:9px;font-size:14px}
 .madison-embed-handle{touch-action:none}
 @media(max-width:900px){.madison-card-start img{height:110px}}
+
+.area-map{height:100%;display:flex;flex-direction:column;min-height:300px}.area-map .leaflet-container{flex:1;min-height:240px}.area-map-summary{padding:10px 12px;background:#f4f7f8;color:#142c3b;font-size:12px;line-height:1.5}.area-map-count{position:absolute;bottom:24px;left:8px;z-index:500;background:white;color:#142c3b;padding:5px 9px;border-radius:4px;font-size:12px;pointer-events:none}.map-cluster{display:flex;align-items:center;justify-content:center;width:44px;height:34px;border-radius:18px;background:#143c51;border:2px solid white;color:white;font-weight:700;box-shadow:0 2px 5px #0005}.map-home-links{max-height:260px;overflow:auto;min-width:180px}.map-home-links p{margin:10px 0}.area-map button{cursor:pointer;text-decoration:underline;padding:4px}.area-map button:disabled{opacity:.4;cursor:default}
+
+@media(max-width:900px){.area-map-shell{height:480px}}

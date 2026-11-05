@@ -37,3 +37,9 @@ Use the same device, browser, network and prompt on both sites within a few minu
 6. Confirm actual CRM/email delivery separately before ads. No test lead or message was sent during this audit.
 
 A follow-up migration restricts direct Supabase browser access to the new snapshot table, matching the existing listing tables. It does not alter Madison.
+
+## Follow-up from Paul: ephemeral sessions and optional registration
+
+Paul shared Anam's explanation that ephemeral sessions allow runtime persona configuration, with a server-side API-key exchange for a short-lived session token. This establishes a possible context-injection path; it does not establish compatibility with the current widget or automatically provide MLS tools or persistent memory. Ask Anam for the supported embed/SDK integration before modifying session startup.
+
+Paul wants browsing without mandatory registration, optional conversational contact capture, and recognition of returning visitors. The website already issues a 30-day HttpOnly first-party `pax_visitor` cookie and supports server-side database conversation storage. This foundation is separate from the Anam iframe and does not currently provide the voice agent with returning-visitor history. An integration would need supported conversation/tool callbacks, server-side identity-to-lead association, and a concise saved-context summary supplied to new voice sessions. An optional verified email sign-in could restore history across devices. Cookies alone identify a browser, not a verified person; shared browsers should not expose sensitive CRM notes. No registration requirement or voice-session changes were added in the map update.

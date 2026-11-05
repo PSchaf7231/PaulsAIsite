@@ -29,7 +29,7 @@ Use the same device, browser, network and prompt on both sites within a few minu
 
 ## Launch priorities and limits
 
-1. Confirm the Vercel deployment is Ready, the snapshot build reports a real MLS count, and the daily cron is registered. Live production verification is blocked from this Codex environment by outbound network policy.
+1. Confirm the Vercel deployment is Ready, the snapshot build reports a real MLS count, and the hourly cron is registered. Live production verification is blocked from this Codex environment by outbound network policy.
 2. Test real inventory search, sorts, pagination and detail URLs on the public domain; measure actual mobile results timing. Local fixture tests do not establish production speed or MLS completeness.
 3. Resolve Anam's current-property/search context bridge before presenting voice-guided search as fully integrated. Existing voice conversation can remain available, but opening the widget alone does not perform an MLS search.
 4. Verify favorites survive navigation/reload and that save errors are visible. Code currently depends on activity responses and does not load saved state in the FavoriteButton itself; this deserves a focused authenticated/session test.

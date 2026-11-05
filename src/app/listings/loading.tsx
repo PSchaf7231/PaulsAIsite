@@ -1,0 +1,1 @@
+export default function Loading(){return <div className="container" role="status" style={{padding:"80px 24px"}}><h1>Finding your next home…</h1><p>Loading matching properties. Your search is on its way.</p></div>;}

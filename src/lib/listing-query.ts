@@ -13,3 +13,9 @@ export function listingPageFilters(params:Record<string,string|string[]|undefine
  const parsed=listingQuerySchema.safeParse(values);
  return parsed.success?parsed.data:{};
 }
+
+export function initialListingFilters(params:Record<string,string|string[]|undefined>){
+ const filters=listingPageFilters(params);
+ const explicitSearch=(typeof params.q==='string'&&!!params.q.trim())||params.all==='1'||Object.keys(filters).some(key=>key!=='sort');
+ return {...(!explicitSearch?{type:'SALE' as const,minPrice:750000,maxPrice:9999999,sort:'price-asc' as const}:{}),...filters};
+}

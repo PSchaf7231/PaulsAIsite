@@ -57,9 +57,9 @@ export function mapSpark(r:Record<string,unknown>,checkedAt:string):Listing|null
  const listed=text(r.OriginalEntryTimestamp)||text(r.OnMarketDate)||text(r.ListingContractDate);
  return {listedAt:listed&&Number.isFinite(Date.parse(listed))?new Date(listed).toISOString():undefined,id:`spark-${key}`,mlsNumber:id,slug:`${words(address)}-${words(city)}-${zip}-${words(id)}`,title:address,address,city,postalCode:zip,price,beds:number(r.BedroomsTotal)??0,baths:number(r.BathroomsTotalInteger)??0,sqft:number(r.LivingArea)??0,missingFields:['beds','baths','sqft'].filter((_,i)=>number([r.BedroomsTotal,r.BathroomsTotalInteger,r.LivingArea][i])===null),latitude:number(r.Latitude),longitude:number(r.Longitude),type,status:'ACTIVE',description:text(r.PublicRemarks),features:[...new Set(features)],propertyType,verifiedAmenities:amenities,source:'BEACHESMLS',attribution:`Listing courtesy of ${office}`,office,isSample:false,photos,updatedAt:new Date(modified).toISOString(),checkedAt};
 }
-export type SparkResult={listings:Listing[];checkedAt:string;hasMore:boolean};
+export type SparkResult={listings:Listing[];checkedAt:string;hasMore:boolean;rawCount:number};
 const cache=new Map<string,{until:number;result:SparkResult}>();
-export async function fetchSpark(filters:ListingFilters={},options:{listingId?:string;limit?:number;lean?:boolean;offset?:number}={},fetcher:typeof fetch=fetch):Promise<SparkResult>{
+export async function fetchSpark(filters:ListingFilters={},options:{listingId?:string;limit?:number;lean?:boolean;offset?:number;fullPhotos?:boolean}={},fetcher:typeof fetch=fetch):Promise<SparkResult>{
  const tokens=sparkTokens();if(!tokens.length)throw new Error('Spark is not configured.');
  const base=new URL(process.env.SPARK_API_BASE||DEFAULT_BASE);if(base.protocol!=='https:'||!(base.hostname==='sparkapi.com'||base.hostname.endsWith('.sparkapi.com')))throw new Error('Invalid Spark endpoint.');
  const limit=Math.min(options.limit||500,5000),key=createHash('sha256').update(JSON.stringify([tokens,base.href,filters,options])).digest('hex');
@@ -75,10 +75,10 @@ export async function fetchSpark(filters:ListingFilters={},options:{listingId?:s
   const response=await authorizedSparkFetch(nextUrl.href,tokens,signal,fetcher);
   if(!response.ok)throw new Error(`Spark request failed (${response.status}).`);
   const data:{value:Record<string,unknown>[];"@odata.nextLink"?:string}=await response.json();if(!Array.isArray(data.value))throw new Error('Invalid Spark response.');
-  for(const raw of data.value){if(rawCount>=limit){truncated=true;break;}rawCount++;const listing=mapSpark(raw,checkedAt);if(listing&&!options.listingId)listing.photos=listing.photos.slice(0,1);if(listing&&!seen.has(listing.id)){seen.add(listing.id);rows.push(listing);}}
+  for(const raw of data.value){if(rawCount>=limit){truncated=true;break;}rawCount++;const listing=mapSpark(raw,checkedAt);if(listing&&!options.listingId&&!options.fullPhotos)listing.photos=listing.photos.slice(0,1);if(listing&&!seen.has(listing.id)){seen.add(listing.id);rows.push(listing);}}
   next=typeof data['@odata.nextLink']==='string'?data['@odata.nextLink']:null;
  }
- const result={listings:rows,checkedAt,hasMore:!!next||truncated};
+ const result={listings:rows,checkedAt,hasMore:!!next||truncated,rawCount};
  if(fetcher===fetch){if(cache.size>=60)cache.delete(cache.keys().next().value!);cache.set(key,{until:Date.now()+60000,result});}
  return result;
 }

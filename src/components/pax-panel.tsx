@@ -2,7 +2,8 @@
 import { createContext,useContext,useEffect,useRef,useState } from 'react';
 import type { PageAction } from '@/lib/pax';
 import { usePathname,useRouter } from 'next/navigation';
-import MadisonBubble from './madison-bubble';
+import dynamic from 'next/dynamic';
+const MadisonBubble=dynamic(()=>import('./madison-bubble'),{ssr:false});
 import { communities } from '@/lib/communities';
 
 const PaxContext=createContext<(message?:string)=>void>(()=>{});
@@ -16,6 +17,8 @@ export default function PaxPanel({children}:{children:React.ReactNode}){
  const [request,setRequest]=useState<{id:string;text:string}>();
  const path=usePathname();
  const [open,setOpen]=useState(false),[activation,setActivation]=useState(0);
+ const [ready,setReady]=useState(false);
+ useEffect(()=>{const timer=setTimeout(()=>setReady(true),1200);return()=>clearTimeout(timer);},[]);
  const privatePage=/^\/(admin|alerts)(\/|$)/.test(path);
  const listingPath=/^\/listings\/[a-z0-9-]+$/.test(path);
  const area=communities.find(c=>path===`/communities/${c.slug}`)?.name;
@@ -33,5 +36,5 @@ export default function PaxPanel({children}:{children:React.ReactNode}){
   }));
  }
  useEffect(()=>{if(new URLSearchParams(window.location.search).get('pax')==='open'){setOpen(true);}},[]);
- return <PaxContext.Provider value={show}>{children}{!privatePage&&<MadisonBubble open={open} activation={activation} onOpen={()=>show()} onClose={()=>{setOpen(false);requestAnimationFrame(()=>opener.current?.focus({preventScroll:true}));}} request={request} listingSlug={listingPath?path.split('/').at(-1):undefined} area={area} onPageAction={movePage}/>}</PaxContext.Provider>;
+ return <PaxContext.Provider value={show}>{children}{!privatePage&&(ready||open)&&<MadisonBubble open={open} activation={activation} onOpen={()=>show()} onClose={()=>{setOpen(false);requestAnimationFrame(()=>opener.current?.focus({preventScroll:true}));}} request={request} listingSlug={listingPath?path.split('/').at(-1):undefined} area={area} onPageAction={movePage}/>}</PaxContext.Provider>;
 }

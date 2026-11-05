@@ -10,10 +10,10 @@ test('home and listings typed searches produce property results',async({page})=>
  await expect(page.getByTestId('listing-card')).toContainText('Delray Beach');
  await page.getByRole('region',{name:'Tell Madison what you want — it’ll narrow these down.'}).getByRole('textbox').fill('Boca Raton under 1 million');await page.getByRole('button',{name:'Ask Madison ↗',exact:true}).click();
  await expect(page.getByTestId('listing-card')).toHaveCount(1);await expect(page.getByTestId('listing-card')).toContainText('Boca Raton');
- await page.getByRole('button',{name:'Reset',exact:true}).click();await expect(page).toHaveURL(/\/listings$/);await expect(searchBox(page)).toHaveValue('');await expect(page.getByRole('region',{name:'Madison search results'})).toHaveCount(0);
+ await page.getByRole('button',{name:'Reset',exact:true}).click();await expect(page).toHaveURL(/\/listings\?all=1$/);await expect(searchBox(page)).toHaveValue('');await expect(page.getByRole('region',{name:'Madison search results'})).toHaveCount(0);
 });
 test('sort is immediate; Reset clears filters and query; lease prices are monthly',async({page})=>{
- await page.goto('/listings');await page.getByRole('combobox',{name:'Sort by'}).selectOption('price-asc');
+ await page.goto('/listings?all=1');await page.getByRole('combobox',{name:'Sort by'}).selectOption('price-asc');
  await expect(page.getByTestId('listing-card').first()).toContainText('$495,000');
  await page.getByRole('combobox',{name:'Sort by'}).selectOption('price-desc');await expect(page.getByTestId('listing-card').first()).toContainText('$925,000');
  await page.getByRole('combobox',{name:'Min price ($)',exact:true}).selectOption('1000000');await page.getByRole('combobox',{name:'Home style',exact:true}).selectOption('HOUSE');
@@ -49,4 +49,26 @@ test('Meta loads after consent and queues one pageview on each public route',asy
 test('rental result cards show monthly asking rent',async({page})=>{
  await page.route('**/api/listings?*',route=>route.fulfill({json:{listings:[{...samples[3],price:5000}],mode:'sample',hasMore:false}}));
  await page.goto('/listings');await page.getByRole('combobox',{name:'Property type',exact:true}).selectOption('RENT');await expect(page.getByTestId('listing-card')).toHaveCount(1);await expect(page.getByTestId('listing-card')).toContainText('$5,000 / month');
+});
+
+test('default inventory is sale-only, $750k to below $10m, ascending, and present in HTML',async({page,request})=>{
+ const response=await request.get('/listings');const html=await response.text();expect(html).toContain('data-testid="listing-card"');expect(html).toContain('1 property found');
+ await page.goto('/listings');await expect(page.getByRole('combobox',{name:'Property type',exact:true})).toHaveValue('SALE');await expect(page.getByRole('combobox',{name:'Min price ($)',exact:true})).toHaveValue('750000');await expect(page.getByRole('combobox',{name:'Max price ($)',exact:true})).toHaveValue('9999999');await expect(page.getByRole('combobox',{name:'Sort by'})).toHaveValue('price-asc');
+ await expect(page.getByTestId('listing-card')).toHaveCount(1);await expect(page.getByTestId('listing-card')).toContainText('$925,000');
+ await page.locator('.map-shell').scrollIntoViewIfNeeded();await expect(page.locator('.map-price')).toHaveCount(1);await expect(page.locator('.map-price')).toContainText('$925k');
+});
+test('loading never becomes an empty result and searches scroll to results',async({page})=>{
+ await page.goto('/listings?city=Missing');
+ let finish:()=>void=()=>{};const gate=new Promise<void>(resolve=>{finish=resolve;});
+ await page.route('**/api/listings?*',async route=>{await gate;await route.fulfill({json:{listings:[samples[0]],total:1,mode:'sample',hasMore:false}});});
+ await page.getByRole('button',{name:'Search homes',exact:true}).click();await expect(page.getByText('Finding matching homes…')).toBeVisible();await expect(page.getByText('No properties match just yet.')).toHaveCount(0);
+ await expect.poll(async()=>Math.round((await page.locator('#listing-results').boundingBox())!.y)).toBeLessThan(200);
+ finish();await expect(page.getByTestId('listing-card')).toHaveCount(1);
+});
+test('sort updates cards and map from the same page, and pagination fetches the next page',async({page})=>{
+ const homes=Array.from({length:50},(_,i)=>({...samples[0],id:`fixture-${i}`,slug:`fixture-${i}`,price:750000+i*10000}));
+ await page.route('**/api/listings?*',route=>{const params=new URL(route.request().url()).searchParams;const pageNumber=Number(params.get('page')||1);const sorted=params.get('sort')==='price-desc'?[...homes].reverse():homes;return route.fulfill({json:{listings:sorted.slice((pageNumber-1)*24,pageNumber*24),total:50,mode:'sample',hasMore:pageNumber*24<50}});});
+ await page.goto('/listings');await page.getByRole('combobox',{name:'Sort by'}).selectOption('price-desc');await expect(page.getByTestId('listing-card')).toHaveCount(24);await expect(page.getByTestId('listing-card').first()).toContainText('$1,240,000');
+ await page.locator('.map-shell').scrollIntoViewIfNeeded();await expect(page.locator('.map-price')).toHaveCount(24);await expect(page.locator('.map-price').first()).toContainText('$1.24m');
+ await page.getByRole('button',{name:'Next 24 homes'}).click();await expect(page.getByTestId('listing-card').first()).toContainText('$1,000,000');await expect(page.locator('.map-price').first()).toContainText('$1.00m');
 });

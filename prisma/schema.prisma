@@ -95,3 +95,10 @@ model PaxSavedSearch {
   status String @default("SAMPLE_ONLY")
   createdAt DateTime @default(now())
 }
+
+// Atomic, complete MLS replica shared by production instances.
+model ListingSnapshot {
+  id Int @id
+  listings Json
+  checkedAt DateTime @db.Timestamptz(6)
+}

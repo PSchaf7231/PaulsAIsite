@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
-    "build": "prisma migrate deploy && prisma generate && next build",
+    "build": "prisma migrate deploy && prisma generate && tsx scripts/sync-listings.ts && next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -19,7 +19,8 @@
     "pax:insights": "tsx scripts/pax-admin.ts insights",
     "pax:confirm": "tsx scripts/pax-admin.ts confirm",
     "pax:retry": "tsx scripts/pax-admin.ts retry",
-    "pax:worker": "tsx scripts/pax-admin.ts worker"
+    "pax:worker": "tsx scripts/pax-admin.ts worker",
+    "listings:sync": "tsx scripts/sync-listings.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.94",

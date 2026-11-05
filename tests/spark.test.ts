@@ -1,10 +1,13 @@
-import {afterEach,it,expect,vi} from 'vitest';
+import {beforeEach,afterEach,it,expect,vi} from 'vitest';
 import {mapSpark,sparkFilter,fetchSpark,sparkToken,sparkCount} from '../src/server/listings/spark';
 import {searchInventory,getListing} from '../src/server/listings/service';
 import {queryInventory} from '../src/server/pax/inventory';
 import {newState} from '../src/server/pax/state';
 import {aiReferral} from '../src/lib/ai-referral';
 import {siteUrl} from '../src/lib/config';
+const {readSnapshot}=vi.hoisted(()=>({readSnapshot:vi.fn()}));
+vi.mock('../src/server/listings/snapshot',()=>({readSnapshot}));
+beforeEach(()=>{readSnapshot.mockReset();});
 const record={ListingKey:'integration1',ListingId:'RX-1234567',StandardStatus:'Active',CountyOrParish:'Palm Beach',StreetNumber:'123',StreetName:'Integration',StreetSuffix:'Way',City:'Delray Beach',PostalCode:'33444',ListPrice:450000,BedroomsTotal:3,BathroomsTotalInteger:2,LivingArea:1700,ListOfficeName:'Test Office (fixture)',ModificationTimestamp:'2026-10-29T12:00:00Z',PropertyType:'Residential',PropertySubType:'Single Family Residence',PublicRemarks:'Test fixture, not an actual listing.',Latitude:26.4,Longitude:-80.1,PoolPrivateYN:true,AssociationYN:false,Media:[{MediaURL:'https://cdn.photos.sparkplatform.com/test.jpg',MediaCategory:'Photo',Order:1}],InternetEntireListingDisplayYN:true,InternetAddressDisplayYN:true};
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();});
 it('maps actual fields, address/MLS slugs, office and timestamps without invented photos',()=>{
@@ -23,16 +26,16 @@ it('never sends a bearer token to an off-origin pagination URL',async()=>{
  vi.stubEnv('SPARK_ACCESS_TOKEN','test-pagination');const fetcher=vi.fn().mockResolvedValue(Response.json({value:[record],'@odata.nextLink':'https://unrelated.example/Property'}));await expect(fetchSpark({}, {},fetcher)).rejects.toThrow('Invalid Spark pagination');expect(fetcher).toHaveBeenCalledTimes(1);
 });
 it('does not mask zero matches or failed live requests with sample records',async()=>{
- vi.stubEnv('SPARK_ACCESS_TOKEN','test-zero');vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({value:[]})));expect(await searchInventory()).toMatchObject({mode:'live',listings:[]});
- vi.stubEnv('SPARK_ACCESS_TOKEN','test-error');vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('',{status:401})));expect(await searchInventory()).toMatchObject({mode:'unavailable',listings:[]});
+ readSnapshot.mockResolvedValue({listings:[],checkedAt:'2026-11-05T00:00:00Z'});vi.stubEnv('SPARK_ACCESS_TOKEN','test-zero');vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({value:[]})));expect(await searchInventory()).toMatchObject({mode:'live',listings:[]});
+ readSnapshot.mockRejectedValue(new Error('Snapshot unavailable'));vi.stubEnv('SPARK_ACCESS_TOKEN','test-error');vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('',{status:401})));expect(await searchInventory()).toMatchObject({mode:'unavailable',listings:[]});
  vi.stubEnv('SPARK_ACCESS_TOKEN','');vi.stubEnv('SPARK_API_TOKEN','');expect((await searchInventory()).listings).toHaveLength(3);
 });
 it('shares filtering between the public inventory function and Pax',async()=>{
- vi.stubEnv('SPARK_ACCESS_TOKEN','test-shared');vi.stubGlobal('fetch',vi.fn().mockImplementation(()=>Promise.resolve(Response.json({value:[record]}))));
+ readSnapshot.mockResolvedValue({listings:[mapSpark(record,'now')!],checkedAt:'now'});vi.stubEnv('SPARK_ACCESS_TOKEN','test-shared');vi.stubGlobal('fetch',vi.fn().mockImplementation(()=>Promise.resolve(Response.json({value:[record]}))));
  const filtered=await searchInventory({city:'Delray Beach',maxPrice:600000,beds:3});const state=newState('test');state.preferences={area:'Delray Beach',maxPrice:600000,beds:3};await queryInventory(state);expect(state.results).toEqual(filtered.listings.map(l=>l.slug));expect(state.listingRecords?.every(l=>!l.isSample)).toBe(true);expect(state.feedMode).toBe('live');
 });
 it('looks up a detail URL by its MLS number and never returns an invalid path',async()=>{
- vi.stubEnv('SPARK_ACCESS_TOKEN','test-detail');const fetcher=vi.fn().mockResolvedValue(Response.json({value:[record]}));vi.stubGlobal('fetch',fetcher);const l=await getListing('123-integration-way-delray-beach-33444-rx-1234567');expect(l?.mlsNumber).toBe('RX-1234567');expect(new URL(fetcher.mock.calls[0][0]).searchParams.get('$filter')).toContain("ListingId eq 'RX-1234567'");expect(await getListing('../../outside')).toBeNull();
+ readSnapshot.mockResolvedValue({listings:[mapSpark(record,'now')!],checkedAt:'now'});vi.stubEnv('SPARK_ACCESS_TOKEN','test-detail');const fetcher=vi.fn().mockResolvedValue(Response.json({value:[record]}));vi.stubGlobal('fetch',fetcher);const l=await getListing('123-integration-way-delray-beach-33444-rx-1234567');expect(l?.mlsNumber).toBe('RX-1234567');expect(fetcher).not.toHaveBeenCalled();expect(await getListing('../../outside')).toBeNull();
 });
 it('supports the Hobson token name and sitemap count without exposing secrets',async()=>{
  vi.stubEnv('SPARK_ACCESS_TOKEN','');vi.stubEnv('SPARK_API_TOKEN','test-hobson');expect(sparkToken()).toBe('test-hobson');vi.stubEnv('SPARK_ACCESS_TOKEN','test-primary');expect(sparkToken()).toBe('test-primary');const fetcher=vi.fn().mockResolvedValue(Response.json({'@odata.count':12345,value:[]}));expect(await sparkCount(fetcher)).toBe(12345);expect(new URL(String(fetcher.mock.calls[0][0])).searchParams.get('$count')).toBe('true');
@@ -67,13 +70,19 @@ it('round-trips Ocean Blvd and every generated detail slug, including ZIP+4 and 
  for(const [id,zip] of [['R11140358','33480'],['R11140358','33480-1234'],['RX-1234567','33444']]){
   vi.stubEnv('SPARK_ACCESS_TOKEN',`test-round-trip-${id}-${zip}`);
   const raw={...record,StreetNumber:'1491',StreetDirPrefix:'N',StreetName:'Ocean',StreetSuffix:'Blvd',ListingId:id,PostalCode:zip};
-  const mapped=mapSpark(raw,'2026-11-05T00:00:00Z')!;
+  const mapped=mapSpark(raw,'2026-11-05T00:00:00Z')!;readSnapshot.mockResolvedValue({listings:[mapped],checkedAt:'now'});
   const fetcher=vi.fn().mockResolvedValue(Response.json({value:[raw]}));vi.stubGlobal('fetch',fetcher);
   expect((await getListing(mapped.slug))?.mlsNumber).toBe(id);
-  expect(new URL(fetcher.mock.calls[0][0]).searchParams.get('$filter')).toContain(`ListingId eq '${id}'`);
+  expect(fetcher).not.toHaveBeenCalled();
  }
 });
 it('does not turn a provider outage into a property-not-found result',async()=>{
- vi.stubEnv('SPARK_ACCESS_TOKEN','test-detail-failure');vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('',{status:503})));
- await expect(getListing('1491-n-ocean-blvd-palm-beach-33480-r11140358')).rejects.toThrow('Spark request failed');
+ readSnapshot.mockRejectedValue(new Error('Snapshot unavailable'));vi.stubEnv('SPARK_ACCESS_TOKEN','test-detail-failure');vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('',{status:503})));
+ await expect(getListing('1491-n-ocean-blvd-palm-beach-33480-r11140358')).rejects.toThrow('Snapshot unavailable');
+});
+
+it('sorts the whole cached inventory before pagination and never calls MLS on a visitor read',async()=>{
+ vi.stubEnv('SPARK_ACCESS_TOKEN','fixture');const fetcher=vi.fn();vi.stubGlobal('fetch',fetcher);
+ const base=mapSpark(record,'now')!;const listings=Array.from({length:900},(_,i)=>({...base,id:`row-${i}`,price:750000+i*1000}));readSnapshot.mockResolvedValue({listings,checkedAt:'now'});
+ const result=await searchInventory({sort:'price-desc'},{limit:24,offset:24});expect(result.total).toBe(900);expect(result.listings).toHaveLength(24);expect(result.listings[0].price).toBe(1625000);expect(result.hasMore).toBe(true);expect(fetcher).not.toHaveBeenCalled();
 });

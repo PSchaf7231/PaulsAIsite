@@ -1,3 +1,4 @@
+import {initialListingFilters} from '../src/lib/listing-query';
 import {it,expect} from 'vitest';
 import {listingQuerySchema,cityHomeSearchUrl} from '../src/lib/listing-query';
 import {filterListings,type Listing} from '../src/lib/listings';
@@ -14,4 +15,11 @@ it('keeps the listing page and city-only links free of implicit filters',()=>{
  expect(listingPageFilters({})).toEqual({});
  expect(listingPageFilters({city:'Delray Beach'})).toEqual({city:'Delray Beach'});
  expect(listingPageFilters({type:'RENT',maxPrice:'5000'})).toEqual({type:'RENT',maxPrice:5000});
+});
+
+it('uses launch defaults even with campaign tags, while preserving explicit search and Reset',()=>{
+ expect(initialListingFilters({utm_source:'facebook'})).toEqual({type:'SALE',minPrice:750000,maxPrice:9999999,sort:'price-asc'});
+ expect(initialListingFilters({sort:'price-desc'})).toMatchObject({type:'SALE',minPrice:750000,sort:'price-desc'});
+ expect(initialListingFilters({all:'1'})).toEqual({});expect(initialListingFilters({q:'rent in Boca'})).toEqual({});
+ expect(initialListingFilters({type:'RENT'})).toEqual({type:'RENT'});
 });

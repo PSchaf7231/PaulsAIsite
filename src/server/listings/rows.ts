@@ -11,7 +11,10 @@ export type ListingDetail={description:string;photos:string[]};
 
 export const normalizeMls=(id:string)=>id.toLowerCase().replace(/[^a-z0-9]/g,'');
 export function listingKeyOf(listing:Listing){return listing.id.replace(/^spark-/,'');}
-const finite=(value:unknown)=>typeof value==='number'&&Number.isFinite(value)?value:null;
+const finite=(value:unknown)=>{const n=typeof value==='string'&&value.trim()!==''?Number(value):value;return typeof n==='number'&&Number.isFinite(n)?n:null;};
+// Postgres int4 columns reject decimals and huge values; round and bound them instead of failing the whole batch.
+const int4=(value:unknown)=>{const n=finite(value);if(n===null)return null;const r=Math.round(n);return r>=0&&r<=2147483647?r:null;};
+const isoOrNull=(value:unknown)=>{if(!value)return null;const d=new Date(String(value));return Number.isNaN(d.getTime())?null:d.toISOString();};
 
 // Card summary: everything a card, the map, Madison's result list and filters need, with only the first photo and no long description.
 export function toRow(listing:Listing):ListingRow{
@@ -23,14 +26,14 @@ export function toRow(listing:Listing):ListingRow{
  const summary={...rest,description:'',photos:photos.slice(0,1)};
  const detail:ListingDetail={description,photos:photos.map(p=>p.url)};
  return {
-  listingKey:listingKeyOf(listing),mlsNumber:listing.mlsNumber||'',mlsKey:normalizeMls(listing.mlsNumber||listingKeyOf(listing)),slug:listing.slug,
-  type:listing.type,propertyType:listing.propertyType||null,price:listing.price,
-  beds:missing.has('beds')?null:listing.beds,baths:missing.has('baths')?null:listing.baths,sqft:missing.has('sqft')?null:listing.sqft,
-  address:listing.address,city:listing.city,postalCode:listing.postalCode.slice(0,5),
+  listingKey:listingKeyOf(listing),mlsNumber:String(listing.mlsNumber||''),mlsKey:normalizeMls(listing.mlsNumber||listingKeyOf(listing)),slug:listing.slug||listingKeyOf(listing),
+  type:listing.type||'sale',propertyType:listing.propertyType||null,price:finite(listing.price)??0,
+  beds:missing.has('beds')?null:int4(listing.beds),baths:missing.has('baths')?null:finite(listing.baths),sqft:missing.has('sqft')?null:int4(listing.sqft),
+  address:listing.address||'',city:listing.city||'',postalCode:String(listing.postalCode||'').slice(0,5),
   latitude:validCoords?lat:null,longitude:validCoords?lng:null,
   pool:!!amenities.pool,waterfront:!!amenities.waterfront,garage:!!amenities.garage,amenities,
   searchText:[listing.address,listing.city,listing.postalCode,listing.mlsNumber||''].join(' ').toLowerCase().replace(/\s+/g,' ').trim(),
-  listedAt:listing.listedAt||null,sourceUpdatedAt:listing.updatedAt||new Date(0).toISOString(),summary,detail
+  listedAt:isoOrNull(listing.listedAt),sourceUpdatedAt:isoOrNull(listing.updatedAt)||new Date(0).toISOString(),summary,detail
  };
 }
 

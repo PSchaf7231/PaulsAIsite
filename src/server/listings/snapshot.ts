@@ -3,7 +3,7 @@
 import type {Listing} from '../../lib/listings';
 import {fetchSpark} from './spark';
 type Snapshot={listings:Listing[];checkedAt:string};
-export type Progress=(progress:{stage:string;recordsRead?:number;eligibleHomes?:number;elapsedSeconds?:number;batchMs?:number})=>void;
+export type Progress=(progress:{stage:string;recordsRead?:number;eligibleHomes?:number;elapsedSeconds?:number;batchMs?:number;detail?:string;listingKey?:string})=>void;
 // Pages are read in parallel waves so a full inventory (~13,000-14,000 homes, ~70 pages) fits well inside the time budget.
 const PAGE_SIZE=200,CONCURRENCY=6;
 export async function collectSnapshot(fetchPage=fetchSpark,onProgress?:Progress):Promise<Snapshot>{

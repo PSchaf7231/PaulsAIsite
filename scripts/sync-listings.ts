@@ -1,6 +1,6 @@
 // Build-time MLS sync. Never fails the build: if the sync cannot finish, the deploy uses the rows already in the database
 // and the hourly cron continues the work.
-import {syncListings,closeSyncDatabase,syncStatus} from '../src/server/listings/sync';
+import {syncListings,closeSyncDatabase,syncStatus,activeListingCount} from '../src/server/listings/sync';
 import {closeReadDatabase} from '../src/server/listings/store';
 import {sparkConfigured} from '../src/server/listings/spark';
 import {snapshotErrorDetail} from '../src/server/listings/snapshot-errors';
@@ -27,7 +27,7 @@ const hardStop=setTimeout(()=>{console.error('Listing sync: exceeded the build t
 hardStop.unref();
 // Only exception: a production MLS build with zero stored homes (first rollout) fails, so the previous deployment stays live
 // instead of publishing a site whose listings say "temporarily unavailable".
-async function usableRows(){try{return ((await syncStatus())?.activeCount??0)>0;}catch{return false;}}
+async function usableRows(){try{return (await activeListingCount())>0;}catch{return false;}}
 main().catch(error=>{console.error('Listing sync failed; continuing the build with existing database rows:',snapshotErrorDetail(error));})
  .then(async()=>{
   if(process.env.VERCEL_ENV==='production'&&sparkConfigured()&&!(await usableRows())){console.error('Listing sync: production has no stored listings yet; failing this build so the previous deployment stays live.');process.exitCode=1;}

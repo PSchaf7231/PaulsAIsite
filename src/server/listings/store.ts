@@ -1,7 +1,8 @@
 // Server only. Reads the one-row-per-listing MLS table with indexed WHERE/ORDER/LIMIT queries.
 import {Pool} from 'pg';
 import type {Listing,ListingFilters} from '../../lib/listings';
-import {fromSummary,withDetail,whereClause,orderClause,normalizeMls,type MapBounds} from './rows';
+import {MAP_PIN_CAP,toPinTuple,type MapPayload} from '../../lib/map-inventory';
+import {fromSummary,withDetail,whereClause,orderClause,rankClause,normalizeMls,type MapBounds} from './rows';
 
 let pool:Pool|undefined;
 export function readDatabase(){
@@ -23,26 +24,27 @@ export async function storeStatus():Promise<StoreStatus>{
 export function storeIsFresh(status:StoreStatus){return status.rows>0&&!!status.checkedAt&&Date.now()-new Date(status.checkedAt).getTime()<=MAX_AGE_MS;}
 
 export async function searchStore(filters:ListingFilters,{limit,offset}:{limit:number;offset:number},checkedAt?:string){
- const where=whereClause(filters),params=[...where.params,limit,offset];
+ const where=whereClause(filters),rank=rankClause(filters,where.params.length),params=[...where.params,...(rank?.params??[]),limit,offset];
  const db=readDatabase();
  const [page,count]=await Promise.all([
-  db.query(`SELECT "summary" FROM "MlsListing" WHERE ${where.sql} ORDER BY ${orderClause(filters.sort)} LIMIT $${params.length-1} OFFSET $${params.length}`,params),
+  db.query(`SELECT "summary" FROM "MlsListing" WHERE ${where.sql} ORDER BY ${rank?rank.sql+', ':''}${orderClause(filters.sort)} LIMIT $${params.length-1} OFFSET $${params.length}`,params),
   db.query(`SELECT count(*)::int AS total FROM "MlsListing" WHERE ${where.sql}`,where.params)
  ]);
  return {listings:page.rows.map(r=>fromSummary(r.summary,checkedAt)) as Listing[],total:count.rows[0]?.total??0};
 }
 
-export type MapPin={id:string;slug:string;address:string;city:string;price:number;type:Listing['type'];isSample:boolean;latitude:number;longitude:number};
-export const MAP_PIN_LIMIT=15000;
-export async function mapStore(filters:ListingFilters,bounds?:MapBounds){
+// Map pins for one area: at most MAP_PIN_CAP compact tuples, the in-area count, overall totals and (without bounds) the extent
+// of every mapped match so the browser can frame the results before asking for the visible area.
+export async function mapStore(filters:ListingFilters,bounds?:MapBounds,cap=MAP_PIN_CAP):Promise<MapPayload>{
  const all=whereClause(filters),inBounds=whereClause(filters,bounds);
  const db=readDatabase();
  const [pins,counts]=await Promise.all([
-  db.query(`SELECT "listingKey","slug","address","city","price","type","latitude","longitude" FROM "MlsListing" WHERE ${inBounds.sql} AND "latitude" IS NOT NULL AND "longitude" IS NOT NULL ORDER BY "price" ASC LIMIT ${MAP_PIN_LIMIT}`,inBounds.params),
-  db.query(`SELECT count(*)::int AS total, count(*) FILTER (WHERE "latitude" IS NULL OR "longitude" IS NULL)::int AS missing FROM "MlsListing" WHERE ${all.sql}`,all.params)
+  db.query(`SELECT "slug","address","city","price","type","latitude","longitude",count(*) OVER()::int AS "inView" FROM "MlsListing" WHERE ${inBounds.sql} AND "latitude" IS NOT NULL AND "longitude" IS NOT NULL ORDER BY "listingKey" ASC LIMIT ${Math.max(1,Math.floor(cap))}`,inBounds.params),
+  db.query(`SELECT count(*)::int AS total, count(*) FILTER (WHERE "latitude" IS NULL OR "longitude" IS NULL)::int AS missing, max("latitude") AS north, min("latitude") AS south, max("longitude") AS east, min("longitude") AS west FROM "MlsListing" WHERE ${all.sql}`,all.params)
  ]);
- const homes:MapPin[]=pins.rows.map(r=>({id:`spark-${r.listingKey}`,slug:r.slug,address:r.address,city:r.city,price:Number(r.price),type:r.type,isSample:false,latitude:Number(r.latitude),longitude:Number(r.longitude)}));
- return {homes,total:counts.rows[0]?.total??0,missingCoordinates:counts.rows[0]?.missing??0,truncated:pins.rows.length>=MAP_PIN_LIMIT};
+ const c=counts.rows[0]||{},inView=pins.rows[0]?.inView??0;
+ const extent=!bounds&&c.north!=null?{north:Number(c.north),south:Number(c.south),east:Number(c.east),west:Number(c.west)}:null;
+ return {pins:pins.rows.map(toPinTuple),total:c.total??0,missingCoordinates:c.missing??0,inView,truncated:inView>pins.rows.length,cap,extent};
 }
 
 export async function listingByMls(mlsId:string,checkedAt?:string):Promise<Listing|null>{

@@ -1,10 +1,10 @@
 import {cache} from 'react';
 import {sparkConfigured,fetchSpark} from './spark';
 import {sampleListings} from './sample';
-import {searchStore,listingByMls,storeStatus,storeIsFresh,mapStore,type MapPin} from './store';
+import {searchStore,listingByMls,storeStatus,storeIsFresh,mapStore} from './store';
 import type {MapBounds} from './rows';
 import {filterListings,type ListingFilters,type Listing} from '../../lib/listings';
-import {mapInventory} from '../../lib/map-inventory';
+import {mapInventory,mapPayload,type MapPayload} from '../../lib/map-inventory';
 export type InventoryResult={listings:Listing[];mode:'live'|'sample'|'unavailable';checkedAt:string;hasMore:boolean;total:number};
 type Source={mode:'live';checkedAt:string}|{mode:'sample'}|{mode:'unavailable'};
 
@@ -34,14 +34,10 @@ export async function searchInventory(filters:ListingFilters={},options:{limit?:
  return {listings:[],mode:'unavailable',checkedAt:new Date().toISOString(),hasMore:false,total:0};
 }
 
-export async function mapListings(filters:ListingFilters={},bounds?:MapBounds):Promise<{homes:MapPin[];total:number;missingCoordinates:number;truncated?:boolean;mode:'live'|'sample';checkedAt:string}>{
+export async function mapListings(filters:ListingFilters={},bounds?:MapBounds):Promise<MapPayload&{mode:'live'|'sample';checkedAt:string}>{
  const source=await inventorySource();
  if(source.mode==='live')return {...await mapStore(filters,bounds),mode:'live',checkedAt:source.checkedAt};
- if(source.mode==='sample'){
-  const result=mapInventory(sampleListings,filters);
-  const homes=bounds?result.homes.filter(h=>h.latitude>=bounds.south&&h.latitude<=bounds.north&&h.longitude>=bounds.west&&h.longitude<=bounds.east):result.homes;
-  return {...result,homes,mode:'sample',checkedAt:new Date().toISOString()};
- }
+ if(source.mode==='sample')return {...mapPayload(mapInventory(sampleListings,filters),bounds),mode:'sample',checkedAt:new Date().toISOString()};
  throw new Error('Map inventory unavailable.');
 }
 

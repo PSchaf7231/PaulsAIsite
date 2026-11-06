@@ -14,8 +14,8 @@ export async function readSnapshot():Promise<Snapshot>{
  memory={snapshot,until:Date.now()+30000};return snapshot;
 }
 type Progress=(progress:{stage:string;recordsRead?:number;eligibleHomes?:number;elapsedSeconds?:number})=>void;
-// Pages are read in parallel waves so a full inventory (~6,600 homes, ~33 pages) fits well inside the time budget.
-const PAGE_SIZE=200,CONCURRENCY=4;
+// Pages are read in parallel waves so a full inventory (~13,000-14,000 homes, ~70 pages) fits well inside the time budget.
+const PAGE_SIZE=200,CONCURRENCY=6;
 export async function collectSnapshot(fetchPage=fetchSpark,onProgress?:Progress):Promise<Snapshot>{
  const rows=new Map<string,Listing>();let offset=0;const started=Date.now();
  for(;;){

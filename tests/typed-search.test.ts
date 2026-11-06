@@ -10,3 +10,13 @@ it('extracts requested city, budget, rooms and features without sale presets',()
 it('offers monthly rent values without using sale amounts',()=>{
  expect(rentalPrices).toContain(5000);expect(rentalPrices).not.toContain(250000);expect(searchPriceLabel(5000,true)).toBe('$5,000 / month');
 });
+it('turns ZIP codes, street addresses and MLS numbers into searchable filters instead of showing everything',()=>{
+ expect(basicSearchFilters('33444')).toEqual({postalCode:'33444'});
+ expect(basicSearchFilters('homes in 33480 under 5m')).toMatchObject({postalCode:'33480',maxPrice:5000000});
+ expect(basicSearchFilters('911 N Ocean Blvd')).toEqual({text:'911 N Ocean Blvd'});
+ expect(basicSearchFilters('600 NE 5th Ave, Delray Beach, FL')).toEqual({text:'600 NE 5th Ave, Delray Beach, FL'});
+ expect(basicSearchFilters('RX-11012345')).toEqual({text:'RX-11012345'});
+ expect(basicSearchFilters('3 bed house in Jupiter')).toMatchObject({city:'Jupiter',beds:3});
+ expect(basicSearchFilters('Highland Beach',['Highland Beach','Palm Beach'])).toEqual({city:'Highland Beach'});
+ expect(basicSearchFilters('West Palm Beach',['Palm Beach'])).toEqual({city:'West Palm Beach'});
+});

@@ -102,3 +102,59 @@ model ListingSnapshot {
   listings Json
   checkedAt DateTime @db.Timestamptz(6)
 }
+
+// One row per MLS listing. Search reads indexed columns + the compact card summary;
+// the detail page alone reads the full detail JSON (all photos, description, features).
+model MlsListing {
+  listingKey      String    @id
+  mlsNumber       String
+  mlsKey          String    @unique
+  slug            String
+  active          Boolean   @default(true)
+  type            String
+  propertyType    String?
+  price           Float
+  beds            Int?
+  baths           Float?
+  sqft            Int?
+  address         String
+  city            String
+  postalCode      String
+  latitude        Float?
+  longitude       Float?
+  pool            Boolean   @default(false)
+  waterfront      Boolean   @default(false)
+  garage          Boolean   @default(false)
+  amenities       Json
+  searchText      String
+  listedAt        DateTime? @db.Timestamptz(6)
+  sourceUpdatedAt DateTime  @db.Timestamptz(6)
+  lastSeenAt      DateTime  @db.Timestamptz(6)
+  summary         Json
+  detail          Json
+  createdAt       DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([active, type, price])
+  @@index([active, city, price])
+  @@index([active, postalCode])
+  @@index([active, sourceUpdatedAt])
+  @@index([active, latitude, longitude])
+  @@index([slug])
+}
+
+// Single-row status of the latest MLS sync (id = 1).
+model MlsSyncStatus {
+  id              Int       @id
+  lastRunAt       DateTime? @db.Timestamptz(6)
+  lastSuccessAt   DateTime? @db.Timestamptz(6)
+  lastCompleteAt  DateTime? @db.Timestamptz(6)
+  activeCount     Int       @default(0)
+  sourceCount     Int       @default(0)
+  written         Int       @default(0)
+  deactivated     Int       @default(0)
+  complete        Boolean   @default(false)
+  durationMs      Int       @default(0)
+  error           String?
+  trigger         String?
+}

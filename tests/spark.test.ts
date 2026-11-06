@@ -5,9 +5,20 @@ import {queryInventory} from '../src/server/pax/inventory';
 import {newState} from '../src/server/pax/state';
 import {aiReferral} from '../src/lib/ai-referral';
 import {siteUrl} from '../src/lib/config';
-const {readSnapshot}=vi.hoisted(()=>({readSnapshot:vi.fn()}));
-vi.mock('../src/server/listings/snapshot',()=>({readSnapshot}));
-beforeEach(()=>{readSnapshot.mockReset();});
+import {filterListings,type Listing} from '../src/lib/listings';
+// In-memory stand-in for the MlsListing table: same filter semantics, and records whether the database was read.
+const {readSnapshot,store}=vi.hoisted(()=>({readSnapshot:vi.fn(),store:{} as Record<string,unknown>}));
+vi.mock('../src/server/listings/store',()=>store);
+beforeEach(()=>{readSnapshot.mockReset();
+ const rows=async()=>(await readSnapshot()) as {listings:Listing[];checkedAt:string};
+ Object.assign(store,{
+  storeStatus:async()=>{const r=await rows();return {rows:r.listings.length||1,checkedAt:new Date().toISOString(),lastCompleteAt:null};},
+  storeIsFresh:()=>true,
+  searchStore:async(f:object,{limit,offset}:{limit:number;offset:number})=>{const m=filterListings((await rows()).listings,f);return {listings:m.slice(offset,offset+limit),total:m.length};},
+  listingByMls:async(id:string)=>(await rows()).listings.find(l=>(l.mlsNumber||'').toLowerCase().replace(/[^a-z0-9]/g,'')===id.toLowerCase().replace(/[^a-z0-9]/g,''))||null,
+  mapStore:async()=>({homes:[],total:0,missingCoordinates:0}),knownCities:async()=>[],resetStoreCaches:()=>undefined
+ });
+});
 const record={ListingKey:'integration1',ListingId:'RX-1234567',StandardStatus:'Active',CountyOrParish:'Palm Beach',StreetNumber:'123',StreetName:'Integration',StreetSuffix:'Way',City:'Delray Beach',PostalCode:'33444',ListPrice:450000,BedroomsTotal:3,BathroomsTotalInteger:2,LivingArea:1700,ListOfficeName:'Test Office (fixture)',ModificationTimestamp:'2026-10-29T12:00:00Z',PropertyType:'Residential',PropertySubType:'Single Family Residence',PublicRemarks:'Test fixture, not an actual listing.',Latitude:26.4,Longitude:-80.1,PoolPrivateYN:true,AssociationYN:false,Media:[{MediaURL:'https://cdn.photos.sparkplatform.com/test.jpg',MediaCategory:'Photo',Order:1}],InternetEntireListingDisplayYN:true,InternetAddressDisplayYN:true};
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();});
 it('maps actual fields, address/MLS slugs, office and timestamps without invented photos',()=>{
@@ -85,4 +96,14 @@ it('sorts the whole cached inventory before pagination and never calls MLS on a 
  vi.stubEnv('SPARK_ACCESS_TOKEN','fixture');const fetcher=vi.fn();vi.stubGlobal('fetch',fetcher);
  const base=mapSpark(record,'now')!;const listings=Array.from({length:900},(_,i)=>({...base,id:`row-${i}`,price:750000+i*1000}));readSnapshot.mockResolvedValue({listings,checkedAt:'now'});
  const result=await searchInventory({sort:'price-desc'},{limit:24,offset:24});expect(result.total).toBe(900);expect(result.listings).toHaveLength(24);expect(result.listings[0].price).toBe(1625000);expect(result.hasMore).toBe(true);expect(fetcher).not.toHaveBeenCalled();
+});
+it('falls back to one live Spark lookup by MLS number when the row is missing, instead of an error page',async()=>{
+ readSnapshot.mockResolvedValue({listings:[],checkedAt:'now'});vi.stubEnv('SPARK_ACCESS_TOKEN','test-fallback');
+ const fetcher=vi.fn().mockResolvedValue(Response.json({value:[record]}));vi.stubGlobal('fetch',fetcher);
+ expect((await getListing('123-integration-way-delray-beach-33444-rx-1234567'))?.mlsNumber).toBe('RX-1234567');
+ expect(fetcher).toHaveBeenCalledTimes(1);expect(new URL(String(fetcher.mock.calls[0][0])).searchParams.get('$filter')).toContain("ListingId eq 'RX-1234567'");
+});
+it('serves a detail page from Spark when the database is unreachable',async()=>{
+ readSnapshot.mockRejectedValue(new Error('db down'));vi.stubEnv('SPARK_ACCESS_TOKEN','test-db-down');vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({value:[record]})));
+ expect((await getListing('123-integration-way-delray-beach-33444-rx-1234567'))?.address).toBe('123 Integration Way');
 });

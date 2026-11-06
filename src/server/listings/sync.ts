@@ -34,7 +34,7 @@ export function upsertStatement(rows:ListingRow[],seenAt:string){
  return {sql,params};
 }
 
-export type SyncResult={skipped?:boolean;reason?:string;count?:number;written?:number;unchanged?:number;remaining?:number;deactivated?:number;complete?:boolean;checkedAt?:string;elapsedSeconds?:number};
+export type SyncResult={skipped?:boolean;reason?:string;count?:number;written?:number;rejected?:number;unchanged?:number;remaining?:number;deactivated?:number;complete?:boolean;checkedAt?:string;elapsedSeconds?:number};
 type SyncOptions={budgetMs?:number;trigger?:string;onProgress?:Progress;collect?:typeof collectSnapshot;now?:()=>number};
 
 async function writeStatus(client:PoolClient,values:Record<string,unknown>){
@@ -64,17 +64,36 @@ export async function syncListings(options:SyncOptions={}):Promise<SyncResult>{
     for(const listing of listings){const key=listingKeyOf(listing),prev=stored.get(key);if(prev&&prev.active&&prev.updated===new Date(listing.updatedAt||0).getTime())unchangedKeys.push(key);else changed.push(listing);}
     for(let i=0;i<unchangedKeys.length;i+=5000)await client.query(`UPDATE "MlsListing" SET "lastSeenAt"=$2 WHERE "listingKey" = ANY($1::text[])`,[unchangedKeys.slice(i,i+5000),seenAt]);
     onProgress?.({stage:'Writing changed listings',eligibleHomes:changed.length,elapsedSeconds:elapsed()});
-    let written=0;
+    let written=0,rejected=0;
     for(let i=0;i<changed.length;i+=BATCH_SIZE){
      if(now()-started>budget)break;
      const batch=changed.slice(i,i+BATCH_SIZE).map(toRow),t=now(),statement=upsertStatement(batch,seenAt);
      // A relisted home can reuse an MLS number under a new ListingKey; drop the stale row so mlsKey stays unique.
-     await client.query(`DELETE FROM "MlsListing" WHERE "mlsKey" = ANY($1::text[]) AND NOT ("listingKey" = ANY($2::text[]))`,[batch.map(r=>r.mlsKey),batch.map(r=>r.listingKey)]);
-     await client.query(statement.sql,statement.params);
-     written+=batch.length;
+     try{
+      await client.query('BEGIN');
+      await client.query(`DELETE FROM "MlsListing" WHERE "mlsKey" = ANY($1::text[]) AND NOT ("listingKey" = ANY($2::text[]))`,[batch.map(r=>r.mlsKey),batch.map(r=>r.listingKey)]);
+      await client.query(statement.sql,statement.params);
+      await client.query('COMMIT');
+      written+=batch.length;
+     }catch(batchError){
+      await client.query('ROLLBACK').catch(()=>undefined);
+      // One bad record must not stop the sync: retry this batch one home at a time and skip only the rows Postgres rejects.
+      onProgress?.({stage:'Batch rejected; retrying one home at a time',detail:dbErrorDetail(batchError)});
+      for(const row of batch){
+       try{
+        await client.query('BEGIN');
+        await client.query(`DELETE FROM "MlsListing" WHERE "mlsKey" = $1 AND "listingKey" <> $2`,[row.mlsKey,row.listingKey]);
+        const single=upsertStatement([row],seenAt);await client.query(single.sql,single.params);
+        await client.query('COMMIT');written++;
+       }catch(rowError){
+        await client.query('ROLLBACK').catch(()=>undefined);rejected++;
+        if(rejected<=10)onProgress?.({stage:'Skipped listing',listingKey:row.listingKey,detail:dbErrorDetail(rowError)});
+       }
+      }
+     }
      onProgress?.({stage:'Saved batch',recordsRead:written,eligibleHomes:changed.length,elapsedSeconds:elapsed(),batchMs:now()-t});
     }
-    const remaining=changed.length-written,complete=remaining===0;
+    const processed=written+rejected,remaining=changed.length-processed,complete=remaining===0;
     let deactivated=0;
     if(complete){
      // Safety: never wipe the table because of an implausibly small pull.
@@ -88,7 +107,7 @@ export async function syncListings(options:SyncOptions={}):Promise<SyncResult>{
     const active=await client.query(`SELECT count(*)::int AS n FROM "MlsListing" WHERE "active"`);
     await writeStatus(client,{lastRunAt:runAt,lastSuccessAt:seenAt,...(complete?{lastCompleteAt:seenAt}:{}),activeCount:active.rows[0].n,sourceCount:listings.length,written,deactivated,complete,durationMs:now()-started,error:null,trigger:options.trigger||null});
     resetStoreCaches();
-    return {count:listings.length,written,unchanged:unchangedKeys.length,remaining,deactivated,complete,checkedAt:seenAt,elapsedSeconds:elapsed()};
+    return {count:listings.length,written,rejected,unchanged:unchangedKeys.length,remaining,deactivated,complete,checkedAt:seenAt,elapsedSeconds:elapsed()};
    }catch(error){
     await writeStatus(client,{lastRunAt:runAt,complete:false,durationMs:now()-started,error:snapshotErrorDetail(error),trigger:options.trigger||null}).catch(()=>undefined);
     throw error;
@@ -100,7 +119,16 @@ function dedupe(listings:Listing[]){
  // mlsKey is unique in the table; keep the most recently modified record per MLS number.
  const byMls=new Map<string,Listing>();
  for(const l of listings){const k=toRow(l).mlsKey,prev=byMls.get(k);if(!prev||new Date(l.updatedAt||0)>new Date(prev.updatedAt||0))byMls.set(k,l);}
- return [...byMls.values()];
+ const byKey=new Map<string,Listing>();for(const l of byMls.values())byKey.set(listingKeyOf(l),l);
+ return [...byKey.values()];
+}
+
+// Postgres data/constraint errors (classes 21, 22, 23) name a column or constraint, never credentials.
+function dbErrorDetail(error:unknown){const e=error as {code?:string;message?:string};return e?.code&&/^2[123]/.test(e.code)?`${e.code}: ${String(e.message||'').slice(0,200)}`:snapshotErrorDetail(error);}
+
+export async function activeListingCount(){
+ const {rows}=await writeDatabase().query(`SELECT count(*)::int AS n FROM "MlsListing" WHERE "active"`);
+ return rows[0]?.n??0;
 }
 
 export async function syncStatus(){

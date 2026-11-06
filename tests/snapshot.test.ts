@@ -24,3 +24,7 @@ it('rejects a missing or stale snapshot instead of showing old or fabricated inv
 it('rejects a source page that cannot advance',async()=>{
  const page=vi.fn().mockResolvedValue({listings:[],rawCount:0,hasMore:true});await expect(collectSnapshot(page)).rejects.toThrow('did not advance');
 });
+it('reads a large inventory in parallel waves and stops at the last page',async()=>{
+ const total=6600,page=vi.fn(async(_f:unknown,{offset}:{offset:number})=>{const raw=Math.max(0,Math.min(200,total-offset));return {listings:raw?[{...sampleListings[0],id:`L${offset}`}]:[],rawCount:raw,hasMore:offset+raw<total};});
+ const result=await collectSnapshot(page as never);expect(result.listings).toHaveLength(33);expect(page.mock.calls.length).toBeLessThanOrEqual(36);
+});

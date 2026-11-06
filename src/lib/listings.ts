@@ -1,3 +1,4 @@
+import {parseTextQuery,textQueryMatches,exactStreetMatch} from "./text-search";
 export type ListingType = "SALE" | "RENT" | "COMMERCIAL";
 export type Listing = {
  listedAt?:string;mlsNumber?:string;office?:string;updatedAt?:string;checkedAt?:string;missingFields?:string[];
@@ -11,10 +12,12 @@ export type ListingFilters = { city?: string; areas?:string[];mustHaves?:string[
 export function eligibleListing(listing:Listing){return listing.type!=="COMMERCIAL"&&(listing.type!=="RENT"||listing.price>=3500);}
 // Typed address/ZIP/MLS search words. State and country words are dropped because they are not stored per listing.
 export function searchTokens(text:string){return text.toLowerCase().replace(/[^a-z0-9\- ]+/g," ").split(/\s+/).filter(t=>t&&t!=="-"&&!["fl","florida","usa","us","unit","apt","#"].includes(t)).slice(0,8);}
-function textMatches(l:Listing,text:string){const hay=[l.address,l.city,l.postalCode,l.mlsNumber||""].join(" ").toLowerCase();return searchTokens(text).every(t=>hay.includes(t));}
+function textMatches(l:Listing,text:string){return textQueryMatches(l,parseTextQuery(text));}
 export function filterListings(listings: Listing[], filters: ListingFilters = {}) {
  const result = listings.filter(l => eligibleListing(l) && l.status === "ACTIVE" && (!filters.propertyType || l.propertyType === filters.propertyType) && (!filters.city || l.city === filters.city)&&(!filters.areas?.length||filters.areas.includes(l.city)) && (!filters.type || l.type === filters.type) && (filters.minPrice == null || l.price >= filters.minPrice) && (filters.maxPrice == null || l.price <= filters.maxPrice) && (filters.beds == null || (!l.missingFields?.includes("beds")&&l.beds >= filters.beds))&&(filters.baths==null||(!l.missingFields?.includes("baths")&&l.baths>=filters.baths)) && (!filters.pool || l.verifiedAmenities?.pool) && (!filters.waterfront || l.verifiedAmenities?.waterfront) && (!filters.garage || l.verifiedAmenities?.garage)&&(!filters.postalCode||l.postalCode.startsWith(filters.postalCode))&&(!filters.text||textMatches(l,filters.text)));
  if (filters.sort) result.sort((a,b) => filters.sort === "price-desc" ? b.price-a.price : a.price-b.price);
+ // Typed street addresses: homes on exactly the typed street come first.
+ if (filters.text){const q=parseTextQuery(filters.text);if(q.kind==="address")result.sort((a,b)=>Number(exactStreetMatch(b.address,q))-Number(exactStreetMatch(a.address,q)));}
  return result;
 }
 export const money = (value: number) => new Intl.NumberFormat("en-US", {style:"currency",currency:"USD",maximumFractionDigits:0}).format(value);

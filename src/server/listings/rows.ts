@@ -1,5 +1,7 @@
 // Pure helpers that convert between the public Listing shape and one MlsListing database row.
-import {searchTokens,type Listing,type ListingFilters} from '../../lib/listings';
+import type {Listing,ListingFilters} from '../../lib/listings';
+import type {MapBounds} from '../../lib/map-inventory';
+import {parseTextQuery,wholeWordPattern,houseNumberPattern,exactStreetPattern,wholeWordOnly} from '../../lib/text-search';
 
 export type ListingRow={
  listingKey:string;mlsNumber:string;mlsKey:string;slug:string;type:string;propertyType:string|null;price:number;
@@ -48,7 +50,7 @@ export function withDetail(summary:Listing,detail:Partial<ListingDetail>|null|un
 }
 
 // Builds a parameterised WHERE clause for every supported filter. Values never reach the SQL text.
-export type MapBounds={north:number;south:number;east:number;west:number};
+export type {MapBounds};
 export function whereClause(f:ListingFilters={},bounds?:MapBounds){
  const params:unknown[]=[],parts=['"active"',`("type"='SALE' OR ("type"='RENT' AND "price">=3500))`];
  const p=(value:unknown)=>{params.push(value);return `$${params.length}`;};
@@ -67,10 +69,27 @@ export function whereClause(f:ListingFilters={},bounds?:MapBounds){
  for(const term of f.mustHaves||[]){const clause=must[term.toLowerCase().trim()];if(clause)parts.push(clause);}
  if(f.postalCode)parts.push(`"postalCode"=${p(f.postalCode.slice(0,5))}`);
  if(f.text){
-  for(const token of searchTokens(f.text))parts.push(`"searchText" LIKE ${p(`%${token.replace(/[\\%_]/g,m=>'\\'+m)}%`)}`);
+  const q=parseTextQuery(f.text),like=(t:string)=>`%${t.replace(/[\\%_]/g,m=>'\\'+m)}%`;
+  if(q.kind==='mls'){
+   // Exact MLS number only (all-digit input also matches the same digits behind an RX-/A-style prefix); never a substring.
+   parts.push(/^\d+$/.test(q.key)?`regexp_replace("mlsKey",'^[a-z]+','')=${p(q.digits)}`:`"mlsKey"=${p(q.key)}`);
+  }else if(q.kind==='address'){
+   // House number as the whole leading token, every street word as a whole word (N/North, Blvd/Boulevard, ...), locality words in city/ZIP.
+   parts.push(`lower("address") ~ ${p(houseNumberPattern(q.number))}`);
+   for(const w of q.street)parts.push(`lower("address") ~ ${p(wholeWordPattern(w))}`);
+   for(const w of q.locality)parts.push(`lower("city" || ' ' || "postalCode") LIKE ${p(like(w))}`);
+  }else{
+   for(const t of q.tokens)parts.push(wholeWordOnly(t)?`"searchText" ~ ${p(`(^|[^a-z0-9])${t}([^a-z0-9]|$)`)}`:`"searchText" LIKE ${p(like(t))}`);
+  }
  }
  if(bounds)parts.push(`"latitude" BETWEEN ${p(bounds.south)} AND ${p(bounds.north)}`,`"longitude" BETWEEN ${p(bounds.west)} AND ${p(bounds.east)}`);
  return {sql:parts.join(' AND '),params};
+}
+// Typed street address: homes on exactly the typed street ("911 N Ocean Blvd ...") sort first. Placeholders start after `paramCount`.
+export function rankClause(f:ListingFilters,paramCount:number):{sql:string;params:unknown[]}|undefined{
+ if(!f.text)return undefined;
+ const q=parseTextQuery(f.text);
+ return q.kind==='address'?{sql:`(lower("address") ~ $${paramCount+1}) DESC`,params:[exactStreetPattern(q)]}:undefined;
 }
 export function orderClause(sort?:ListingFilters['sort']){
  return sort==='price-desc'?'"price" DESC, "listingKey" DESC':sort==='price-asc'?'"price" ASC, "listingKey" ASC':'"sourceUpdatedAt" DESC, "listingKey" ASC';

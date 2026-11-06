@@ -1,6 +1,7 @@
 import {listingQuerySchema} from '@/lib/listing-query';
 import {mapListings} from '@/server/listings/service';
-// Lightweight pins only (id, slug, address, city, price, type, coordinates). Optional north/south/east/west limit pins to a map area.
+// Compact pins ([slug, address, city, price, lat, lng, rent?]) for one map area, capped at MAP_PIN_CAP with the in-area count.
+// Optional north/south/east/west limit pins to that area; without them the response also carries the extent of all matches.
 export async function GET(req:Request){
  const params=new URL(req.url).searchParams,box=['north','south','east','west'].map(k=>params.get(k));
  for(const k of ['north','south','east','west'])params.delete(k);

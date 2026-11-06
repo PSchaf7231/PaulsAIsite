@@ -71,12 +71,21 @@ describe.skipIf(!url)('MLS row storage against PostgreSQL',()=>{
   const mls=await service.searchInventory({text:'RX-11000001'},{limit:24});expect(mls.listings[0].address).toBe('600 NE 5th Ave');
   const zip=await service.searchInventory({postalCode:'33444'},{limit:500});expect(zip.listings.every(l=>l.postalCode==='33444')).toBe(true);
  });
- it('map endpoint data: lightweight pins for every match, or only those inside bounds',async()=>{
-  const all=await time('map all matches (defaults)',()=>service.mapListings({type:'SALE',minPrice:750000,maxPrice:9999999}));
-  expect(all.homes.length+all.missingCoordinates).toBe(all.total);expect(Object.keys(all.homes[0]).sort()).toEqual(['address','city','id','isSample','latitude','longitude','price','slug','type']);
+ it('map endpoint data: compact capped pins for the requested area, with totals and the extent of all matches',async()=>{
+  const {MAP_PIN_CAP,fromPinTuples}=await import('../src/lib/map-inventory');
+  const all=await time('map defaults, no bounds',()=>service.mapListings({type:'SALE',minPrice:750000,maxPrice:9999999}));
+  expect(all.inView+all.missingCoordinates).toBe(all.total);expect(all.pins.length).toBe(Math.min(all.inView,MAP_PIN_CAP));expect(all.truncated).toBe(all.inView>MAP_PIN_CAP);
+  expect(all.extent).not.toBeNull();expect(all.pins[0].length).toBeLessThanOrEqual(7);
   const box=await time('map in bounds',()=>service.mapListings({type:'SALE'},{north:26.5,south:26.4,east:-80.0,west:-80.3}));
-  expect(box.homes.length).toBeGreaterThan(0);expect(box.homes.every(h=>h.latitude>=26.4&&h.latitude<=26.5&&h.longitude>=-80.3&&h.longitude<=-80)).toBe(true);
-  timings['map pins JSON bytes (defaults)']=JSON.stringify(all).length;
+  const homes=fromPinTuples(box.pins);
+  expect(homes.length).toBeGreaterThan(0);expect(homes.every(h=>h.latitude>=26.4&&h.latitude<=26.5&&h.longitude>=-80.3&&h.longitude<=-80)).toBe(true);expect(box.extent).toBeNull();
+  timings['map pins JSON bytes (defaults)']=JSON.stringify(all).length;expect(JSON.stringify(all).length).toBeLessThan(300_000);
+ });
+ it('address search: whole house number + street words, exact street first, no MLS substring hits',async()=>{
+  const near=await service.searchInventory({text:'911 N Ocean'},{limit:24});expect(near.listings.map(l=>l.address)).toEqual(['911 N Ocean Blvd']);
+  const north=await service.searchInventory({text:'911 North Ocean Boulevard'},{limit:24});expect(north.listings[0]?.address).toBe('911 N Ocean Blvd');
+  const none=await service.searchInventory({text:'912 N Ocean'},{limit:24});expect(none.total).toBe(0);
+  const mlsSub=await service.searchInventory({text:'1100 N Ocean'},{limit:24});expect(mlsSub.total).toBe(0);
  });
  it('detail lookup reads one row with every photo, redirects stale slugs and 404s removed homes',async()=>{
   const inv=syntheticInventory(3);

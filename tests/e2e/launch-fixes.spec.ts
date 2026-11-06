@@ -69,10 +69,22 @@ test('map includes all matching homes independently of card pages, with accessib
  const homes=Array.from({length:250},(_,i)=>({...samples[0],id:`fixture-${i}`,slug:`fixture-${i}`,address:`Fixture ${i}`,price:750000+i*1000}));
  await page.route('**/api/listings?*',route=>{const params=new URL(route.request().url()).searchParams;const pageNumber=Number(params.get('page')||1);const sorted=params.get('sort')==='price-desc'?[...homes].reverse():homes;return route.fulfill({json:{listings:sorted.slice((pageNumber-1)*24,pageNumber*24),total:250,mode:'sample',hasMore:pageNumber*24<250}});});
  let mapRequests=0;
- await page.route('**/api/listings/map?*',route=>{mapRequests++;return route.fulfill({json:{homes,total:250,missingCoordinates:0,mode:'sample'}});});
+ await page.route('**/api/listings/map?*',route=>{mapRequests++;const lat=homes.map(h=>h.latitude!),lng=homes.map(h=>h.longitude!);return route.fulfill({json:{pins:homes.map(h=>[h.slug,h.address,h.city,h.price,h.latitude,h.longitude]),total:250,missingCoordinates:0,inView:250,truncated:false,cap:2000,extent:{north:Math.max(...lat),south:Math.min(...lat),east:Math.max(...lng),west:Math.min(...lng)},mode:'sample'}});});
  await page.goto('/listings');await page.getByRole('combobox',{name:'Sort by'}).selectOption('price-desc');await expect(page.getByTestId('listing-card')).toHaveCount(24);
  await page.locator('.map-shell').scrollIntoViewIfNeeded();await expect(page.locator('.area-map-summary').first()).toContainText('250 mapped homes');await expect(page.locator('.map-cluster')).toHaveText('250');
  await page.locator('.map-cluster').click();await expect(page.getByRole('link',{name:/Fixture 0$/})).toBeVisible();await page.getByRole('button',{name:'More homes',exact:true}).click();await expect(page.getByRole('link',{name:/Fixture 10$/})).toBeVisible();await page.locator('.leaflet-popup-close-button').click();
  const before=mapRequests;await page.getByRole('button',{name:'Next 24 homes'}).click();await expect(page.getByTestId('listing-card').first()).toContainText('$975,000');await expect(page.locator('.map-cluster')).toHaveText('250');expect(mapRequests).toBe(before);
  await page.locator('.map-shell').scrollIntoViewIfNeeded();const map=page.locator('.area-map .leaflet-container');await map.focus();for(let i=0;i<12;i++)await map.press('ArrowRight');await expect(page.locator('.area-map-count')).toContainText('0 matching homes');await expect(page.getByTestId('listing-card')).toHaveCount(24);
+});
+test('map asks only for the visible area when a search has more homes than one response carries',async({page})=>{
+ const home=(i:number,lat:number,lng:number)=>[`area-${i}`,`Area ${i}`,'Delray Beach',800000+i,lat,lng];
+ const requests:URL[]=[];
+ await page.route('**/api/listings/map?*',route=>{const url=new URL(route.request().url());requests.push(url);const bounded=url.searchParams.has('north');
+  return route.fulfill({json:bounded?{pins:[home(1,26.46,-80.07),home(2,26.461,-80.071)],total:5000,missingCoordinates:0,inView:2,truncated:false,cap:2000,extent:null,mode:'sample'}
+   :{pins:Array.from({length:3},(_,i)=>home(i,26.3+i*0.2,-80.1)),total:5000,missingCoordinates:0,inView:5000,truncated:true,cap:2000,extent:{north:26.9,south:26.3,east:-80.0,west:-80.2},mode:'sample'}});});
+ await page.goto('/listings');await page.locator('.map-shell').scrollIntoViewIfNeeded();
+ await expect(page.locator('.area-map-summary').first()).toContainText('5,000 mapped homes');
+ await expect.poll(()=>requests.filter(u=>u.searchParams.has('north')).length).toBeGreaterThan(0);
+ const bounded=requests.find(u=>u.searchParams.has('north'))!;for(const k of ['north','south','east','west'])expect(Number.isFinite(Number(bounded.searchParams.get(k)))).toBe(true);
+ expect(bounded.searchParams.get('type')).toBe(requests[0].searchParams.get('type'));
 });

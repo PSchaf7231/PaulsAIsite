@@ -1,16 +1,29 @@
 import {generateText,Output} from 'ai';
 import {listingQuerySchema} from '../../lib/listing-query';
 import type {ListingFilters} from '../../lib/listings';
+import {looksLikeAddress,looksLikeMls} from '../../lib/text-search';
 import {createPaxModel,paxConfigured} from '../pax/provider';
 const cities=['Palm Beach Gardens','West Palm Beach','Lake Worth Beach','Delray Beach','Boynton Beach','Boca Raton','Palm Beach','Wellington','Jupiter'];
 // A bounded fallback keeps property search usable when the language model is unavailable.
 // Typed street addresses ("911 N Ocean Blvd") and MLS numbers ("RX-11012345") become a text search on stored address/MLS fields.
-const ADDRESS=/^\s*\d{1,6}[a-z]?\s+(?:[nsew]\.?\s+|north\s+|south\s+|east\s+|west\s+)?[a-z0-9]/i,MLS=/^\s*(?:rx-?\d{6,}|[a-z]\d{7,})\s*$/i;
+const NOT_ADDRESS=/\b(?:bed|bath|br\b|bd\b|ba\b|under\b|over\b|above\b|below\b|million\b|thousand\b|\d+(?:\.\d+)?\s*[km]\b)/i;
+const escapeRe=(v:string)=>v.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+// "911 N Ocean Blvd Palm Beach FL" -> "911 N Ocean Blvd, Palm Beach FL" so the city is matched as the locality, not as street words.
+function separateLocality(query:string,known:string[]){
+ const q=query.trim().slice(0,120);
+ if(q.includes(','))return q;
+ for(const city of known){
+  const m=q.match(new RegExp(`^(.*\\S)\\s+(${escapeRe(city)}(?:\\s+(?:fl|florida))?(?:\\s+\\d{5})?)$`,'i'));
+  if(m&&/^\s*\d{1,6}[a-z]?\s+\S/i.test(m[1]))return `${m[1]}, ${m[2]}`.slice(0,120);
+ }
+ return q;
+}
 export function basicSearchFilters(query:string,extraCities:string[]=[]):ListingFilters{
  const q=query.toLowerCase(),filters:ListingFilters={};
- if(MLS.test(query)||(ADDRESS.test(query)&&!/\b(?:bed|bath|br\b|bd\b|ba\b|under\b|over\b|above\b|below\b|million\b|thousand\b|\d+(?:\.\d+)?\s*[km]\b)/i.test(query)&&!/^\s*\d{5}\s*$/.test(query)))return listingQuerySchema.parse({text:query.trim().slice(0,120)});
- const zip=q.match(/\b(3[34]\d{3})\b/);if(zip)filters.postalCode=zip[1];
  const known=[...new Set([...cities,...extraCities])].sort((a,b)=>b.length-a.length);
+ if(looksLikeMls(query))return listingQuerySchema.parse({text:query.trim().slice(0,120)});
+ if(looksLikeAddress(query)&&!NOT_ADDRESS.test(query))return listingQuerySchema.parse({text:separateLocality(query,known)});
+ const zip=q.match(/\b(3[34]\d{3})\b/);if(zip)filters.postalCode=zip[1];
  const city=known.find(city=>new RegExp(`(?:^|[^a-z])${city.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?:$|[^a-z])`).test(q));if(city)filters.city=city;
  else if(/\bboca\b/.test(q))filters.city='Boca Raton';else if(/\bdelray\b/.test(q))filters.city='Delray Beach';else if(/\bboynton\b/.test(q))filters.city='Boynton Beach';
  if(/\brent(?:al|ing|s)?\b|\bleas(?:e|ing)\b|per month|\/mo\b/.test(q))filters.type='RENT';

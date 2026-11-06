@@ -16,7 +16,7 @@ beforeEach(()=>{readSnapshot.mockReset();
   storeIsFresh:()=>true,
   searchStore:async(f:object,{limit,offset}:{limit:number;offset:number})=>{const m=filterListings((await rows()).listings,f);return {listings:m.slice(offset,offset+limit),total:m.length};},
   listingByMls:async(id:string)=>(await rows()).listings.find(l=>(l.mlsNumber||'').toLowerCase().replace(/[^a-z0-9]/g,'')===id.toLowerCase().replace(/[^a-z0-9]/g,''))||null,
-  mapStore:async()=>({homes:[],total:0,missingCoordinates:0}),knownCities:async()=>[],resetStoreCaches:()=>undefined
+  mapStore:async()=>({pins:[],total:0,missingCoordinates:0,inView:0,truncated:false,cap:2000,extent:null}),knownCities:async()=>[],resetStoreCaches:()=>undefined
  });
 });
 const record={ListingKey:'integration1',ListingId:'RX-1234567',StandardStatus:'Active',CountyOrParish:'Palm Beach',StreetNumber:'123',StreetName:'Integration',StreetSuffix:'Way',City:'Delray Beach',PostalCode:'33444',ListPrice:450000,BedroomsTotal:3,BathroomsTotalInteger:2,LivingArea:1700,ListOfficeName:'Test Office (fixture)',ModificationTimestamp:'2026-10-29T12:00:00Z',PropertyType:'Residential',PropertySubType:'Single Family Residence',PublicRemarks:'Test fixture, not an actual listing.',Latitude:26.4,Longitude:-80.1,PoolPrivateYN:true,AssociationYN:false,Media:[{MediaURL:'https://cdn.photos.sparkplatform.com/test.jpg',MediaCategory:'Photo',Order:1}],InternetEntireListingDisplayYN:true,InternetAddressDisplayYN:true};

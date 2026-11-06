@@ -25,5 +25,12 @@ async function main(){
 }
 const hardStop=setTimeout(()=>{console.error('Listing sync: exceeded the build time limit; continuing the build with existing rows.');process.exit(0);},BUILD_BUDGET_MS+240000);
 hardStop.unref();
+// Only exception: a production MLS build with zero stored homes (first rollout) fails, so the previous deployment stays live
+// instead of publishing a site whose listings say "temporarily unavailable".
+async function usableRows(){try{return ((await syncStatus())?.activeCount??0)>0;}catch{return false;}}
 main().catch(error=>{console.error('Listing sync failed; continuing the build with existing database rows:',snapshotErrorDetail(error));})
- .finally(async()=>{await Promise.allSettled([closeSyncDatabase(),closeReadDatabase()]);process.exitCode=0;});
+ .then(async()=>{
+  if(process.env.VERCEL_ENV==='production'&&sparkConfigured()&&!(await usableRows())){console.error('Listing sync: production has no stored listings yet; failing this build so the previous deployment stays live.');process.exitCode=1;}
+  else process.exitCode=0;
+ })
+ .finally(async()=>{await Promise.allSettled([closeSyncDatabase(),closeReadDatabase()]);});

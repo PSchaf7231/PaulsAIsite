@@ -6,7 +6,7 @@ import {featuredHomes} from '@/lib/home-listings';
 export default async function HomeFeaturedSection(){
  const [sale,rent]=await Promise.all([
   searchInventory({type:'SALE',propertyType:'HOUSE',minPrice:3000000,maxPrice:5000000,sort:'price-desc'},{limit:6}),
-  searchInventory({type:'RENT',sort:'price-desc'},{limit:6})
+  searchInventory({type:'RENT',minPrice:5000,maxPrice:15000,sort:'price-desc'},{limit:6})
  ]);
  return <><HomeFeatured sale={featuredHomes(sale.listings,'SALE')} rent={featuredHomes(rent.listings,'RENT')}/><div className="home-explore"><Link className="textlink" href="/listings">Explore all properties ↗</Link></div>{sale.mode!=='sample'&&<ListingDisclosure live checkedAt={sale.checkedAt}/>}</>;
 }

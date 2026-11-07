@@ -22,6 +22,6 @@ export default function DigitalSearch(){
   </form>{pending&&<p role="status">Searching for matching homes…</p>}
   <div className="digital-suggestions"><span>Start somewhere</span>{searchShortcuts.map(item=><Link key={item.label} href={item.href}>{item.label} ↗</Link>)}<Link href="/contact">I’m thinking of selling ↗</Link></div>
   <div className="digital-search-bottom"><Link href="/listings">Browse homes yourself ↗</Link><span>Explore at your own pace.</span></div>
-  <details className="digital-filters"><summary>Prefer filters? Search by city, price & beds</summary><HomeSearch/></details>
+  <div className="digital-filters digital-filters-open"><p className="digital-filters-title">Or search with filters</p><HomeSearch/></div>
  </div>;
 }

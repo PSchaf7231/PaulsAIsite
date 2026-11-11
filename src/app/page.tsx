@@ -12,7 +12,9 @@ import HomePlacePhoto from '@/components/home-place-photo';
 import {homeTilePhotos} from '@/lib/home-tile-photos';
 import { homePlaces } from '@/lib/home-places';
 export const dynamic='force-dynamic';
-export const metadata=pageMetadata('Where Palm Beach comes home','Discover Palm Beach County homes with Paul Schafranick. A personal approach to buying, leasing and selling.','/');
+const homeTitle='Palm Beach Real Estate Pros | Paul Schafranick, Realtor®';
+const baseMeta=pageMetadata(homeTitle,'Palm Beach County homes for sale and rent with Paul Schafranick, Realtor®. A personal approach to buying, leasing and selling from Boca Raton to Jupiter.','/');
+export const metadata={...baseMeta,title:{absolute:homeTitle},openGraph:{...baseMeta.openGraph,title:homeTitle}};
 export default function Home(){
  return <div className="coastal-home"><section className="coastal-hero">
  {/* Decorative hero photo (not a listing). Keep property facts in results and listing pages. */}

@@ -207,5 +207,5 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
 @media(max-width:900px){.hero-photo img{object-position:65% 50%}.hero-photo-shade{background:linear-gradient(0deg,#0a1628f5 0%,#0a1628d9 45%,#0a162866 75%,#0a162826 100%)}.madison-launch.madison-hero-card{width:180px!important}.madison-launch.madison-hero-card img,.madison-hero-card .madison-card-start img{height:140px!important}.madison-panel.madison-embed-panel.madison-hero-card{width:200px}}
 @media(max-width:700px){.digital-filters-open .coastal-search{grid-template-columns:1fr 1fr}.digital-filters-open .coastal-search label:first-child{grid-column:auto}.digital-filters-open .coastal-search>.btn{width:100%;justify-self:stretch}}
 
-/* Madison call window: portrait shape so her full face shows (was a short strip cropping at the chin) */
-.madison-embed{height:auto!important;aspect-ratio:3/4}
+/* Madison call window: taller so her full face shows; 4:3 matches the video so no empty band (was a short strip cropping at the chin) */
+.madison-embed{height:auto!important;aspect-ratio:4/3}

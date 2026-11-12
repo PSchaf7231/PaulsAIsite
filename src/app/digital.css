@@ -211,3 +211,24 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
 .madison-embed{height:auto!important;aspect-ratio:4/3}
 /* Header brokerage name collided with the logo text on phones; footer still shows it */
 @media(max-width:1100px){.temporary-brokerage{display:none}}
+/* Hero v2 (2026-11-12): SEO headline, compact search above the fold */
+.hero-v2{min-height:0;height:auto;padding:0}
+.hero-v2 .coastal-hero-content{padding-top:56px;padding-bottom:56px;max-width:1180px}
+.hero-v2 .hero-photo img{object-position:65% 50%}
+.hero-v2 .hero-photo-shade{background:linear-gradient(90deg,#0a1628f0 0%,#0a1628c4 34%,#0a162840 62%,#0a162800 80%),linear-gradient(0deg,#0a1628b3 0%,#0a162800 35%)}
+.hero-eyebrow{display:block;color:#e2c693;font-size:12px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px}
+.hero-v2 h1{font-size:clamp(34px,4vw,56px);line-height:1.08;letter-spacing:-.03em;max-width:720px;font-weight:500}
+.hero-v2 p{font-size:17px;margin-top:14px}
+.hero-search{max-width:720px;margin-top:26px;background:#0e2240e6;border:1px solid #b8913a99;border-radius:14px;padding:14px;box-shadow:0 18px 50px #0006}
+.hero-search-q input{width:100%;background:#ffffff0d;border:1px solid #ffffff26;border-radius:9px;color:#fff;padding:12px 14px;font-size:16px}
+.hero-search-q input::placeholder{color:#b7c3d4}
+.hero-search-row{display:grid;grid-template-columns:1.6fr 1fr 1fr .8fr auto;gap:10px;margin-top:10px;align-items:end}
+.hero-search-row label{display:flex;flex-direction:column;gap:4px;font-size:11px;letter-spacing:.06em;color:#c9d3e1;min-width:0}
+.hero-search-row select{background:#fff;color:#0a1628;border:0;border-radius:8px;height:42px;padding:0 10px;font-size:15px;min-width:0}
+.hero-search-btn{height:42px;padding:0 26px;border-radius:8px;background:#0a1628;color:#fff;border:1.5px solid #d4af37;font-size:15px;font-weight:600;cursor:pointer}
+.hero-search-btn:hover{background:#13294a}
+.coastal-home .hero-v2 .btn.hero-gold{background:#d4af37;background-image:var(--gold-metal);border-color:#b8913a;color:#0a1628!important;border-radius:8px;font-size:15px}
+.hero-v2 .hero-call-link{color:#fff;font-size:16px}
+.hero-v2 .hero-lead-actions{margin-top:18px}
+@media(max-width:900px){.hero-v2 .coastal-hero-content{padding-bottom:40px;padding-right:24px}.hero-search-row{grid-template-columns:1fr 1fr}.hero-search-row label:first-child{grid-column:1/-1}.hero-search-btn{grid-column:1/-1;width:100%}}
+@media(max-width:700px){.hero-v2 h1{font-size:32px}.hero-v2 p{font-size:15px}.hero-eyebrow{font-size:10px}.hero-v2 .hero-photo-shade{background:linear-gradient(0deg,#0a1628f2 0%,#0a1628cc 55%,#0a162866 100%)}}

@@ -232,3 +232,8 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
 .hero-v2 .hero-lead-actions{margin-top:18px}
 @media(max-width:900px){.hero-v2 .coastal-hero-content{padding-bottom:40px;padding-right:24px}.hero-search-row{grid-template-columns:1fr 1fr}.hero-search-row label:first-child{grid-column:1/-1}.hero-search-btn{grid-column:1/-1;width:100%}}
 @media(max-width:700px){.hero-v2 h1{font-size:32px}.hero-v2 p{font-size:15px}.hero-eyebrow{font-size:10px}.hero-v2 .hero-photo-shade{background:linear-gradient(0deg,#0a1628f2 0%,#0a1628cc 55%,#0a162866 100%)}}
+@media(max-width:700px){.hero-search-row{grid-template-columns:1fr 1fr 1fr}.hero-search-row label:first-child{grid-column:1/-1}.hero-search-row select{font-size:16px;padding:0 8px}.hero-search-btn{grid-column:1/-1}
+ .madison-launch.madison-hero-card,.madison-panel.madison-embed-panel.madison-hero-card{position:fixed!important;top:auto!important;bottom:14px!important;right:12px!important;width:118px!important;z-index:40}
+ .madison-launch.madison-hero-card img,.madison-hero-card .madison-card-start img{height:84px!important}
+ .madison-launch.madison-hero-card span{font-size:12px;padding:6px}}
+@media(max-width:700px){.hero-v2 .hero-lead-actions{flex-direction:column;align-items:flex-start;gap:12px;padding-right:130px}}

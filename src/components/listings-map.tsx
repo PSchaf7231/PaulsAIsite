@@ -11,7 +11,7 @@ function FitBounds({listings}:{listings:Listing[]}){
 function ResultMarker({listing:l,index,selected,focusRequest,numbered}:{listing:Listing;index:number;selected:boolean;focusRequest?:number;numbered:boolean}){
  const marker=useRef<LeafletMarker>(null),map=useMap();
  useEffect(()=>{if(selected){map.setView([l.latitude!,l.longitude!],13);marker.current?.openPopup();}},[selected,focusRequest,l.latitude,l.longitude,map]);
- return <Marker ref={marker} position={[l.latitude!,l.longitude!]} icon={divIcon({html:`<span class="map-price">${numbered?`#${index+1} · `:''}$${l.price>=1000000?(l.price/1000000).toFixed(2)+"m":(l.price/1000).toFixed(l.price<10000?1:0)+"k"}</span>`,className:"",iconSize:[numbered?90:65,30],iconAnchor:[32,15]})}><Popup><strong>{numbered?`#${index+1} · `:''}{listingPrice(l)}</strong><p>{l.address}<br/>{l.city}{l.isSample && <><br/>Sample · approximate location</>}</p><Link href={`/listings/${l.slug}`}>View property →</Link></Popup></Marker>;
+ return <Marker ref={marker} position={[l.latitude!,l.longitude!]} icon={divIcon({html:`<span class="map-price">${numbered?`#${index+1} · `:''}$${l.price>=1000000?(l.price/1000000).toFixed(2)+"m":(l.price/1000).toFixed(l.price<10000?1:0)+"k"}</span>`,className:"",iconSize:[numbered?90:65,30],iconAnchor:[32,15]})}><Popup><strong>{numbered?`#${index+1} · `:''}{listingPrice(l)}</strong><p>{l.address}<br/>{l.city}{l.isSample && <><br/>Sample · approximate location</>}</p><Link href={`/listings/${l.slug}`}>View property</Link></Popup></Marker>;
 }
 export default function ListingsMap({listings,selectedSlug,focusRequest,numbered=false}:{listings:Listing[];selectedSlug?:string;focusRequest?:number;numbered?:boolean}){
  const [tileError,setTileError]=useState(false);

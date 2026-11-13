@@ -237,3 +237,18 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
  .madison-launch.madison-hero-card img,.madison-hero-card .madison-card-start img{height:84px!important}
  .madison-launch.madison-hero-card span{font-size:12px;padding:6px}}
 @media(max-width:700px){.hero-v2 .hero-lead-actions{flex-direction:column;align-items:flex-start;gap:12px;padding-right:130px}}
+/* Hero v2 polish, matched to Paul's ChatGPT retouch (2026-11-12) */
+.header{border-bottom:1px solid #d4af37b3}
+.hero-v2{border-bottom:1px solid #d4af37b3}
+.hero-v2 .hero-photo img{filter:brightness(1.14) saturate(1.12) contrast(1.03)}
+.hero-v2 .hero-photo-shade{background:linear-gradient(90deg,#0a1628d9 0%,#0a1628a6 34%,#0a162826 62%,#0a162800 80%),linear-gradient(0deg,#0a162899 0%,#0a162800 30%)}
+.hero-v2 h1{font-weight:600;letter-spacing:-.02em;text-shadow:0 2px 18px #0a162880}
+.hero-v2 p{font-weight:500}
+.hero-eyebrow{color:#e6c766;font-weight:600}
+.hero-search{border:1.5px solid #d9b443;box-shadow:0 0 0 1px #d4af3726,0 18px 50px #0006}
+.hero-search-row label{font-weight:600;color:#e3e9f2}
+.hero-search-btn{border:1.5px solid #e0bd4f}
+.coastal-home .hero-v2 .btn.hero-gold{background-image:linear-gradient(100deg,#c9a23a,#e6c35a 45%,#f0d77f 60%,#c39a35);font-weight:600}
+.hero-v2 .hero-call-link{font-weight:600}
+@media(max-width:700px){.hero-v2 .hero-photo-shade{background:linear-gradient(0deg,#0a1628eb 0%,#0a1628b3 55%,#0a162840 100%)}}
+.navlinks .btn.small{border:1.5px solid #d9b443!important}

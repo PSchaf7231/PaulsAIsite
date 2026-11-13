@@ -6,7 +6,8 @@ import {analyticsConsent,marketingEvent} from '@/lib/marketing-events';
 import { track,activityReady } from '@/lib/activity-client';
 export default function LeadConversion({live=false}:{live?:boolean}){
  const pathname=usePathname();
- const [open,setOpen]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ const [open,setOpen]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[sent,setSent]=useState(false);
+ const listingSlug=/^\/listings\/([a-z0-9-]{1,240})$/.exec(pathname)?.[1];
  useEffect(()=>{
   if(window.location.pathname.startsWith('/admin'))return;
   let visit=crypto.randomUUID();try{const stored=sessionStorage.getItem('pax-visit');if(stored)visit=stored as typeof visit;else sessionStorage.setItem('pax-visit',visit);}catch{/* Browsing works when browser storage is disabled. */}
@@ -15,18 +16,19 @@ export default function LeadConversion({live=false}:{live?:boolean}){
   return()=>clearInterval(interval);
  },[]);
  useEffect(()=>{const match=/^\/listings\/([^/]+)$/.exec(pathname);if(match){void track({kind:'view',slug:decodeURIComponent(match[1])});marketingEvent('listing_view_count');}},[pathname]);
+ useEffect(()=>{setSent(false);setMessage('');},[pathname]);
  async function submit(e:React.FormEvent<HTMLFormElement>){
   e.preventDefault();setBusy(true);setMessage('');const f=new FormData(e.currentTarget);
-  try{await activityReady();const r=await fetch('/api/pax/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.get('email'),purpose:'CONTACT',smsConsent:false,emailConsent:false,eventId:crypto.randomUUID(),analyticsConsent:analyticsConsent()})});const body=await r.json();if(!r.ok)throw new Error(body.error);marketingEvent('Lead',body.eventId);window.location.assign('/thank-you');}
+  try{await activityReady();const r=await fetch('/api/pax/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.get('email'),purpose:'CONTACT',...(listingSlug?{listing:{slug:listingSlug}}:{}),smsConsent:false,emailConsent:false,eventId:crypto.randomUUID(),analyticsConsent:analyticsConsent()})});const body=await r.json();if(!r.ok)throw new Error(body.error);marketingEvent('Lead',body.eventId);if(listingSlug){setSent(true);setOpen(false);setMessage('Thank you. Paul has your request about this home and will follow up personally.');}else window.location.assign('/thank-you');}
   catch(e){setMessage(e instanceof Error?e.message:'Please try again.');}finally{setBusy(false);}
  }
  function dismiss(){setOpen(false);void track({kind:'dismiss'});}
  if(pathname.startsWith("/admin")||pathname==='/contact')return null;
  return <section className="lead-conversion" aria-label="Next steps with Madison">
-  <div className="container"><p><strong>Madison · Your next move</strong> Want help finding real Palm Beach County homes?</p><button className="btn outline small" onClick={()=>setOpen(v=>!v)}>Ask Paul to follow up</button>
+  <div className="container"><p><strong>Madison · Your next move</strong> Want help finding real Palm Beach County homes?</p>{!sent&&<button className="btn outline small" onClick={()=>setOpen(v=>!v)}>Ask Paul to follow up</button>}
   {open&&<form className="lead-form" onSubmit={submit}><h2>Let’s make your next move easier.</h2><p>What email should Paul use? You can keep browsing without sharing anything else.</p>
    <label>Email<input name="email" type="email" autoComplete="email" required maxLength={254}/></label>
-   <p className="pax-fine">Submitting saves your contact details and browsing history for Paul’s personal follow-up. <Link href="/privacy">Privacy</Link>. {!live&&"Fictional sample properties cannot be toured; "}all appointments require confirmation.</p>
+   <p className="pax-fine">Submitting saves your contact details and browsing history for Paul’s personal follow-up. <Link href="/privacy">Privacy</Link>. {!live&&"Fictional sample properties cannot be toured. "}All appointments require confirmation.</p>
    <div className="lead-form-actions"><button className="btn" disabled={busy}>{busy?'Saving…':'Send my request'}</button><Link className="btn outline" href="/listings" onClick={dismiss}>Keep browsing</Link></div>
   </form>}{message&&<p role="status">{message}</p>}</div>
  </section>;

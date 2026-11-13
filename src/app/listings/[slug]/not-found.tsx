@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function ListingNotFound(){return <div className="article"><span className="eyebrow">HOME NOT FOUND</span><h1>This home isn’t available.</h1><p>It may have sold, been leased or been taken off the market.</p><div className="actions" style={{marginTop:25}}><Link className="btn" href="/listings">Back to home search</Link><Link className="btn outline" href="/contact">Ask Paul about similar homes</Link></div></div>}

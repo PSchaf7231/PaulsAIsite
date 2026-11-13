@@ -24,3 +24,8 @@ export const money = (value: number) => new Intl.NumberFormat("en-US", {style:"c
 export const listingPrice = (listing: Listing) => money(listing.price) + (listing.type === "RENT" ? " / month" : "");
 
 export function listingFact(listing:Listing,field:'beds'|'baths'|'sqft'){return listing.missingFields?.includes(field)?'—':listing[field].toLocaleString('en-US');}
+// "1 bed", "3 beds", "1 bath", "2.5 baths"; a missing value shows a dash.
+export function listingFactLabel(listing:Listing,field:'beds'|'baths'){
+ const value=listingFact(listing,field),one=field==='beds'?'bed':'bath';
+ return `${value} ${listing[field]===1&&value!=='—'?one:`${one}s`}`;
+}

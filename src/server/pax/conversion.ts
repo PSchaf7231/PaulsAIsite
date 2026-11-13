@@ -5,8 +5,11 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { PaxState, Contact } from '../../lib/pax';
 import { event, home, normalizeContact, notify, now, updatePreferences } from './state';
-export const captureSchema=z.object({eventId:z.string().uuid().optional(),analyticsConsent:z.boolean().optional(),intent:z.enum(['BUYER','SELLER','RENTER']).optional(),name:z.string().trim().max(100).optional(),email:z.union([z.string().email().max(254),z.literal('')]).optional(),phone:z.string().max(30).optional(),wanted:z.string().trim().max(600).optional(),timeline:z.string().trim().max(100).optional(),smsConsent:z.boolean().default(false),emailConsent:z.boolean().default(false),purpose:z.enum(['CONTACT','SEARCH','CALL','VALUATION']).default('CONTACT')}).strict().superRefine((data,ctx)=>{try{normalizeContact(data);}catch{ctx.addIssue({code:z.ZodIssueCode.custom,message:'Provide a valid phone number or email address.'});}});
+export const captureSchema=z.object({eventId:z.string().uuid().optional(),analyticsConsent:z.boolean().optional(),intent:z.enum(['BUYER','SELLER','RENTER']).optional(),name:z.string().trim().max(100).optional(),email:z.union([z.string().email().max(254),z.literal('')]).optional(),phone:z.string().max(30).optional(),wanted:z.string().trim().max(600).optional(),timeline:z.string().trim().max(100).optional(),smsConsent:z.boolean().default(false),emailConsent:z.boolean().default(false),purpose:z.enum(['CONTACT','SEARCH','CALL','VALUATION','SHOWING']).default('CONTACT'),listing:z.object({slug:z.string().regex(/^[a-z0-9-]{1,240}$/)}).strict().optional(),preferredDay:z.string().trim().max(40).optional()}).strict().superRefine((data,ctx)=>{try{normalizeContact(data);}catch{ctx.addIssue({code:z.ZodIssueCode.custom,message:'Provide a valid phone number or email address.'});}});
 export type CaptureInput=z.infer<typeof captureSchema>;
+// The home a lead came from, looked up on the server so Follow Up Boss gets the real MLS number, address and page link.
+export type LeadProperty={slug:string;url:string;mlsNumber?:string;address?:string;city?:string;postalCode?:string;price?:number;forRent?:boolean};
+export function propertyLine(p:LeadProperty){return [p.address?`${p.address}${p.city?`, ${p.city}, FL ${p.postalCode||''}`.trimEnd():''}`:p.slug,p.mlsNumber?`MLS #${p.mlsNumber}`:null,p.url].filter(Boolean).join(' | ');}
 export function queueFollowup(state:PaxState){
  if(!state.lead)return;
  for(const channel of ['email','sms'] as const){
@@ -17,11 +20,11 @@ export function queueFollowup(state:PaxState){
   state.notifications.push({id:randomUUID(),reason:'instant follow-up',summary,status:'pending',attempts:0,nextAttemptAt:now(),channel,audience:'lead',to});
  }
 }
-export function captureLead(state:PaxState,input:CaptureInput,source:'WEBSITE'|'FACEBOOK_FORM'='WEBSITE'){
+export function captureLead(state:PaxState,input:CaptureInput,source:'WEBSITE'|'FACEBOOK_FORM'='WEBSITE',property?:LeadProperty){
  if(input.eventId&&state.events.some(e=>e.kind==='lead_submission'&&e.detail===input.eventId))return {saved:true,eventId:input.eventId,message:'Your request is saved for Paul.'};
  const contact:Contact=normalizeContact(input);
  if(input.intent)state.preferences.intent=input.intent;
- state.source=source;if(input.wanted)state.wanted=input.wanted;
+ state.source=source;const homeLine=property?`${input.purpose==='SHOWING'?'Showing request':'Question about'}: ${propertyLine(property)}${input.preferredDay?`\nPreferred day: ${input.preferredDay}`:''}`:'';const wanted=[homeLine,input.wanted].filter(Boolean).join('\n').slice(0,900);if(wanted)state.wanted=wanted;
  if(input.timeline)updatePreferences(state,{timeline:input.timeline});
  state.communicationConsent={sms:input.smsConsent,email:input.emailConsent,at:now(),method:source==='WEBSITE'?'website unchecked channel choices':'Facebook form explicit yes fields'};
  const fresh=!state.lead;if(fresh)state.leadOrigin=source==='FACEBOOK_FORM'?'FACEBOOK_FORM':'WEBSITE';if(input.purpose==='VALUATION')state.preferences.intent='SELLER';
@@ -32,7 +35,7 @@ export function captureLead(state:PaxState,input:CaptureInput,source:'WEBSITE'|'
  event(state,'lead_request',input.purpose);queueFollowup(state);
  const eventId=input.eventId||randomUUID();
  if(!fresh&&input.eventId)notify(state,'lead request');
- if(source==='WEBSITE'&&(fresh||input.eventId))state.notifications.push({id:randomUUID(),integration:'fub',audience:'agent',payload:{person:{firstName:contact.name?.split(' ')[0],lastName:contact.name?.split(' ').slice(1).join(' '),emails:contact.email?[{value:contact.email}]:[],phones:contact.phone?[{value:contact.phone}]:[]},source:'PB Real Estate Pros website',type:'Registration',message:`${state.wanted||''}\nIntent: ${state.preferences.intent||'Exploring'}\nMLS properties viewed: ${state.viewed.map(slug=>{const l=state.listingRecords?.find(l=>l.slug===slug);return l?`${l.mlsNumber||slug}: ${l.address}`:slug;}).join(', ')||'none'}`},reason:'website lead',summary:'Follow Up Boss lead',status:'pending',attempts:0,nextAttemptAt:now()});
+ if(source==='WEBSITE'&&(fresh||input.eventId))state.notifications.push({id:randomUUID(),integration:'fub',audience:'agent',payload:{person:{firstName:contact.name?.split(' ')[0],lastName:contact.name?.split(' ').slice(1).join(' '),emails:contact.email?[{value:contact.email}]:[],phones:contact.phone?[{value:contact.phone}]:[]},source:'PB Real Estate Pros website',type:property?'Property Inquiry':'Registration',...(property?{property:{street:property.address,city:property.city,state:'FL',code:property.postalCode,mlsNumber:property.mlsNumber,price:property.price,forRent:property.forRent,url:property.url}}:{}),message:`${wanted||state.wanted||''}\nIntent: ${state.preferences.intent||'Exploring'}\nMLS properties viewed: ${state.viewed.map(slug=>{const l=state.listingRecords?.find(l=>l.slug===slug);return l?`${l.mlsNumber||slug}: ${l.address}`:slug;}).join(', ')||'none'}`},reason:'website lead',summary:'Follow Up Boss lead',status:'pending',attempts:0,nextAttemptAt:now()});
  if(input.analyticsConsent&&process.env.META_CONVERSIONS_ACCESS_TOKEN&&metaPixelId)state.notifications.push({id:randomUUID(),integration:'meta',payload:{eventId,eventTime:Math.floor(Date.now()/1000),email:contact.email,phone:contact.phone},reason:'lead conversion',summary:'Meta Lead conversion',status:'pending',attempts:0,nextAttemptAt:now()});
  if(input.eventId)event(state,'lead_submission',input.eventId);
  return {saved:true,eventId,message:'Your request is saved for Paul. Browsing stays open. Paul will confirm availability and any next steps.'};

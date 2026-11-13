@@ -24,7 +24,9 @@ export default async function Listings({searchParams}:{searchParams:Promise<Reco
  let filters=mergeTypedSearch(initialListingFilters(params),interpreted?.filters,specificHome);
  // For sale unless the visitor picks For lease or types "rent".
  if(!filters.type&&!specificHome)filters={...filters,type:'SALE'};
- const inventory=await searchInventory(filters,{limit:PAGE_SIZE,offset:(page-1)*PAGE_SIZE});
+ let inventory=await searchInventory(filters,{limit:PAGE_SIZE,offset:(page-1)*PAGE_SIZE});
+ // One quick retry when the listing database hiccups (seen once in testing while filters changed quickly).
+ if(inventory.mode==='unavailable')inventory=await searchInventory(filters,{limit:PAGE_SIZE,offset:(page-1)*PAGE_SIZE});
  const listings=inventory.listings;
  // Unrecognised words that match no address, city, ZIP or MLS number: say so instead of showing every home.
  const notFound=!!query&&interpreted?.method==='text'&&!specificHome&&inventory.mode!=='unavailable'&&!inventory.total;

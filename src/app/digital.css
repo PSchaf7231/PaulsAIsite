@@ -252,3 +252,20 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
 .hero-v2 .hero-call-link{font-weight:600}
 @media(max-width:700px){.hero-v2 .hero-photo-shade{background:linear-gradient(0deg,#0a1628eb 0%,#0a1628b3 55%,#0a162840 100%)}}
 .navlinks .btn.small{border:1.5px solid #d9b443!important}
+/* Readability bump (Paul, 2026-11-12): no squinting on small text */
+.topbar{font-size:14px;height:38px}
+.navlinks{font-size:15px;gap:24px}
+.navlinks .btn.small{font-size:15px}
+.brand small{font-size:13px}
+.hero-eyebrow{font-size:14px}
+.hero-v2 p{font-size:20px}
+.hero-search-row label{font-size:13px}
+.hero-search-q input::placeholder{color:#cfd8e5}
+.hero-v2 .hero-call-link{font-size:18px}
+.coastal-home .hero-v2 .btn.hero-gold{font-size:16px}
+.mobile-nav summary,.mobile-nav nav a{font-size:16px}
+@media(max-width:700px){.hero-eyebrow{font-size:12px}.hero-v2 p{font-size:17px}.hero-search-row label{font-size:13px}}
+@media(max-width:1180px){.navlinks{gap:16px;font-size:14px}}
+@media(max-width:1380px) and (min-width:901px){.temporary-brokerage{position:static;transform:none;margin:0 auto;font-size:17px;padding:0 12px}}
+@media(max-width:700px){.hero-v2 .hero-lead-actions{padding-right:0}.coastal-home .hero-v2 .btn.hero-gold{white-space:nowrap;font-size:15px;padding:13px 18px}.hero-v2 .hero-call-link{padding-right:130px}}
+@media(max-width:1240px) and (min-width:901px){.hero-v2 .coastal-hero-content{padding-right:300px}}

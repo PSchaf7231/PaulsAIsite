@@ -10,7 +10,7 @@ export default function LeadForm(){
   try{await activityReady();const response=await fetch('/api/pax/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:data.get('name'),phone:data.get('phone'),email:data.get('email'),intent:data.get('intent'),wanted:data.get('message'),purpose:'CONTACT',eventId,analyticsConsent:analyticsConsent()})});const result=await response.json();if(!response.ok)throw new Error(result.error||'Unable to save your request. Please try again.');marketingEvent('Lead',result.eventId);router.push('/thank-you');}
   catch(error){setError(error instanceof Error?error.message:'Please try again.');setBusy(false);}
  }
- return <section className="container section" id="lead-form"><h2>Get a Call</h2><p>Tell Paul about your next move.</p><form className="lead-form" onSubmit={submit}>
+ return <section className="container section" id="lead-form"><h2>Book a Free Consultation</h2><p>Tell Paul about your next move.</p><form className="lead-form" onSubmit={submit}>
  <label>Name<input name="name" autoComplete="name" required maxLength={100}/></label>
  <label>Phone<input name="phone" type="tel" autoComplete="tel" required maxLength={30}/></label>
  <label>Email<input name="email" type="email" autoComplete="email" required maxLength={254}/></label>

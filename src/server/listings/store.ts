@@ -23,12 +23,14 @@ export async function storeStatus():Promise<StoreStatus>{
 }
 export function storeIsFresh(status:StoreStatus){return status.rows>0&&!!status.checkedAt&&Date.now()-new Date(status.checkedAt).getTime()<=MAX_AGE_MS;}
 
+// One home listed in two MLS feeds (same street address + unit, ZIP and sale/lease) is shown once: the most recently updated copy.
+const HOME_KEY=`CASE WHEN "address"='' THEN "listingKey" ELSE regexp_replace(lower("address"),'\\m(unit|apt|apartment|ste|suite)\\M|[^a-z0-9]','','g') END,"postalCode","type"`;
 export async function searchStore(filters:ListingFilters,{limit,offset}:{limit:number;offset:number},checkedAt?:string){
  const where=whereClause(filters),rank=rankClause(filters,where.params.length),params=[...where.params,...(rank?.params??[]),limit,offset];
  const db=readDatabase();
  const [page,count]=await Promise.all([
-  db.query(`SELECT "summary" FROM "MlsListing" WHERE ${where.sql} ORDER BY ${rank?rank.sql+', ':''}${orderClause(filters.sort)} LIMIT $${params.length-1} OFFSET $${params.length}`,params),
-  db.query(`SELECT count(*)::int AS total FROM "MlsListing" WHERE ${where.sql}`,where.params)
+  db.query(`WITH m AS (SELECT "summary","address","price","listingKey","sourceUpdatedAt",row_number() OVER (PARTITION BY ${HOME_KEY} ORDER BY "sourceUpdatedAt" DESC,"listingKey" ASC) AS "copy" FROM "MlsListing" WHERE ${where.sql}) SELECT "summary" FROM m WHERE "copy"=1 ORDER BY ${rank?rank.sql+', ':''}${orderClause(filters.sort)} LIMIT $${params.length-1} OFFSET $${params.length}`,params),
+  db.query(`SELECT count(DISTINCT (${HOME_KEY}))::int AS total FROM "MlsListing" WHERE ${where.sql}`,where.params)
  ]);
  return {listings:page.rows.map(r=>fromSummary(r.summary,checkedAt)) as Listing[],total:count.rows[0]?.total??0};
 }

@@ -2,8 +2,9 @@ import {generateText,Output} from 'ai';
 import {listingQuerySchema} from '../../lib/listing-query';
 import type {ListingFilters} from '../../lib/listings';
 import {looksLikeAddress,looksLikeMls} from '../../lib/text-search';
+import {findTown,searchCities} from '../../lib/search-cities';
 import {createPaxModel,paxConfigured} from '../pax/provider';
-const cities=['Palm Beach Gardens','West Palm Beach','Lake Worth Beach','Delray Beach','Boynton Beach','Boca Raton','Palm Beach','Wellington','Jupiter'];
+const cities=searchCities;
 // A bounded fallback keeps property search usable when the language model is unavailable.
 // Typed street addresses ("911 N Ocean Blvd") and MLS numbers ("RX-11012345") become a text search on stored address/MLS fields.
 const NOT_ADDRESS=/\b(?:bed|bath|br\b|bd\b|ba\b|under\b|over\b|above\b|below\b|million\b|thousand\b|\d+(?:\.\d+)?\s*[km]\b)/i;
@@ -24,8 +25,8 @@ export function basicSearchFilters(query:string,extraCities:string[]=[]):Listing
  if(looksLikeMls(query))return listingQuerySchema.parse({text:query.trim().slice(0,120)});
  if(looksLikeAddress(query)&&!NOT_ADDRESS.test(query))return listingQuerySchema.parse({text:separateLocality(query,known)});
  const zip=q.match(/\b(3[34]\d{3})\b/);if(zip)filters.postalCode=zip[1];
- const city=known.find(city=>new RegExp(`(?:^|[^a-z])${city.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?:$|[^a-z])`).test(q));if(city)filters.city=city;
- else if(/\bboca\b/.test(q))filters.city='Boca Raton';else if(/\bdelray\b/.test(q))filters.city='Delray Beach';else if(/\bboynton\b/.test(q))filters.city='Boynton Beach';
+ // Typed towns win, including short forms and typos ("del ray", "Jupitor", "Bocca Raton").
+ const town=findTown(query,extraCities);if(town)filters.city=town.city;
  if(/\brent(?:al|ing|s)?\b|\bleas(?:e|ing)\b|per month|\/mo\b/.test(q))filters.type='RENT';
  else if(/\bbuy(?:ing)?\b|\bfor sale\b/.test(q))filters.type='SALE';
  const beds=q.match(/(\d+)\s*[-+]?\s*(?:bed(?:room)?s?|br)\b/);if(beds)filters.beds=Number(beds[1]);

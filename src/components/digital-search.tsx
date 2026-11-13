@@ -17,7 +17,7 @@ export default function DigitalSearch(){
   <div className="digital-search-top"><span><Sparkles size={14} aria-hidden="true"/> YOUR SEARCH, IN YOUR WORDS</span><span>POWERED BY MADISON</span></div>
   <form onSubmit={e=>{e.preventDefault();if(query.trim())startTransition(()=>router.push(`/listings?${new URLSearchParams({q:query.trim()})}`));}}>
    <label className="sr-only" htmlFor="home-natural-search">Describe your ideal home</label>
-   <input id="home-natural-search" value={query} onChange={e=>setQuery(e.target.value)} maxLength={2000} placeholder="A waterfront home in Jupiter, with room for a boat…" required/>
+   <input id="home-natural-search" value={query} onChange={e=>setQuery(e.target.value)} maxLength={2000} placeholder="A waterfront home with room for a boat…" required/>
    <button className="btn" type="submit" disabled={pending}>{pending?"Finding homes…":"Explore with Madison"}</button>
   </form>{pending&&<p role="status">Searching for matching homes…</p>}
   <div className="digital-suggestions"><span>Start somewhere</span>{searchShortcuts.map(item=><Link key={item.label} href={item.href}>{item.label}</Link>)}<Link href="/contact">I’m thinking of selling</Link></div>

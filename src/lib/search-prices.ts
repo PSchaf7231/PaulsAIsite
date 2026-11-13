@@ -1,3 +1,4 @@
-export const salePrices=[250000,...Array.from({length:200},(_,i)=>(i+2)*250000)];
+// About 25 steps: $100K steps to $1M, then wider steps up to $50M.
+export const salePrices=[100000,200000,300000,400000,500000,600000,700000,800000,900000,1000000,1250000,1500000,1750000,2000000,2500000,3000000,3500000,4000000,5000000,6000000,7500000,10000000,15000000,20000000,30000000,50000000];
 export const rentalPrices=[3500,4000,4500,5000,6000,7500,10000,12500,15000,20000,25000,35000,50000,75000,100000];
 export function searchPriceLabel(value:number,rental=false){return rental?`$${value.toLocaleString('en-US')} / month`:value>=1000000?`$${value/1000000}M`:`$${value/1000}K`;}

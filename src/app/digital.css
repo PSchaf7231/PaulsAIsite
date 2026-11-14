@@ -222,7 +222,7 @@ body{background:#0a1628;color:#e9f2ff}.site-ai-atmosphere{background:linear-grad
 .hero-search{max-width:720px;margin-top:26px;background:#0e2240e6;border:1px solid #b8913a99;border-radius:14px;padding:14px;box-shadow:0 18px 50px #0006}
 .hero-search-q input{width:100%;background:#ffffff0d;border:1px solid #ffffff26;border-radius:9px;color:#fff;padding:12px 14px;font-size:16px}
 .hero-search-q input::placeholder{color:#b7c3d4}
-.hero-search-row{display:grid;grid-template-columns:1.6fr 1fr 1fr .8fr auto;gap:10px;margin-top:10px;align-items:end}
+.hero-search-row{display:grid;grid-template-columns:1.5fr 1fr 1fr .75fr .75fr auto;gap:10px;margin-top:10px;align-items:end}
 .hero-search-row label{display:flex;flex-direction:column;gap:4px;font-size:11px;letter-spacing:.06em;color:#c9d3e1;min-width:0}
 .hero-search-row select{background:#fff;color:#0a1628;border:0;border-radius:8px;height:42px;padding:0 10px;font-size:15px;min-width:0}
 .hero-search-btn{height:42px;padding:0 26px;border-radius:8px;background:#0a1628;color:#fff;border:1.5px solid #d4af37;font-size:15px;font-weight:600;cursor:pointer}

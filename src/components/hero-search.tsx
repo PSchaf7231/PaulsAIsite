@@ -17,6 +17,7 @@ export default function HeroSearch(){
    <label>Looking to<select name="type" value={type} onChange={e=>{setType(e.target.value);const f=e.currentTarget.form;if(f)(f.elements.namedItem('maxPrice') as HTMLSelectElement).value='';}}><option value="SALE">Buy</option><option value="RENT">Rent</option></select></label>
    <label>Max price<select name="maxPrice" defaultValue=""><option value="">Any</option>{prices.map(v=><option value={v} key={v}>{searchPriceLabel(v,rental)}</option>)}</select></label>
    <label>Beds<select name="beds" defaultValue=""><option value="">Any</option>{[1,2,3,4,5].map(n=><option value={n} key={n}>{n}+</option>)}</select></label>
+   <label>Baths<select name="baths" defaultValue=""><option value="">Any</option>{[1,2,3,4,5].map(n=><option value={n} key={n}>{n}+</option>)}</select></label>
    <button className="hero-search-btn" type="submit" disabled={pending}>{pending?'Searching…':'Search'}</button>
   </div>
  </form>;
